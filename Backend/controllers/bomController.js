@@ -1,5 +1,6 @@
 const BOM = require('../models/BOM');
 const Parts = require('../models/Parts');
+const { getMasterConfigDocument, isMasterValueAllowed } = require('../services/masterConfigService');
 
 async function createBOM(req, res) {
   try {
@@ -17,6 +18,29 @@ async function createBOM(req, res) {
       return res.status(400).json({
         status: 'error',
         message: 'At least one part item is required',
+      });
+    }
+
+    const masterConfig = await getMasterConfigDocument();
+
+    if (!(await isMasterValueAllowed('classes', className, { allowEmpty: false }))) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid Class. Allowed values: ${masterConfig.classes.join(', ')}`,
+      });
+    }
+
+    if (!(await isMasterValueAllowed('endConnections', endConnection, { allowEmpty: false }))) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid End Connection. Allowed values: ${masterConfig.endConnections.join(', ')}`,
+      });
+    }
+
+    if (!(await isMasterValueAllowed('sizes', size, { allowEmpty: false }))) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid Size. Allowed values: ${masterConfig.sizes.join(', ')}`,
       });
     }
 
@@ -160,6 +184,29 @@ async function updateBOM(req, res) {
       return res.status(400).json({
         status: 'error',
         message: 'At least one part item is required',
+      });
+    }
+
+    const masterConfig = await getMasterConfigDocument();
+
+    if (!(await isMasterValueAllowed('classes', className, { allowEmpty: false }))) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid Class. Allowed values: ${masterConfig.classes.join(', ')}`,
+      });
+    }
+
+    if (!(await isMasterValueAllowed('endConnections', endConnection, { allowEmpty: false }))) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid End Connection. Allowed values: ${masterConfig.endConnections.join(', ')}`,
+      });
+    }
+
+    if (!(await isMasterValueAllowed('sizes', size, { allowEmpty: false }))) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid Size. Allowed values: ${masterConfig.sizes.join(', ')}`,
       });
     }
 

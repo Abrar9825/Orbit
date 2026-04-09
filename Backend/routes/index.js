@@ -3,6 +3,7 @@ const authRoutes = require('./authRoutes');
 const bomRoutes = require('./bomRoutes');
 const machineRoutes = require('./machineRoutes');
 const partsRoutes = require('./partsRoutes');
+const masterConfigRoutes = require('./masterConfigRoutes');
 const stockRoutes = require('./stockRoutes');
 const { healthCheck } = require('../controllers/healthController');
 
@@ -15,5 +16,6 @@ router.use('/parts', partsRoutes);
 router.use('/bom', bomRoutes);
 router.use('/machine', machineRoutes);
 router.use('/stock', stockRoutes);
+router.use('/config-master', masterConfigRoutes);
 
 module.exports = router;

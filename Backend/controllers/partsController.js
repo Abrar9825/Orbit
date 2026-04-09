@@ -1,5 +1,6 @@
 const Parts = require('../models/Parts');
 const { PART_TEMPLATES } = require('../config/partTemplates');
+const { getMasterConfigDocument, isMasterValueAllowed } = require('../services/masterConfigService');
 
 function toItemKey(value) {
   return String(value || '').trim().toUpperCase();
@@ -41,6 +42,29 @@ async function createPart(req, res) {
 
     if (!itemName) {
       return res.status(400).json({ status: 'error', message: 'Item Name is required' });
+    }
+
+    const masterConfig = await getMasterConfigDocument();
+
+    if (!(await isMasterValueAllowed('sizes', size, { allowEmpty: true }))) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid Size. Allowed values: ${masterConfig.sizes.join(', ')}`,
+      });
+    }
+
+    if (!(await isMasterValueAllowed('endConnections', endConnection, { allowEmpty: true }))) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid End Connection. Allowed values: ${masterConfig.endConnections.join(', ')}`,
+      });
+    }
+
+    if (!(await isMasterValueAllowed('classes', className, { allowEmpty: true }))) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid Class. Allowed values: ${masterConfig.classes.join(', ')}`,
+      });
     }
 
     const itemKey = toItemKey(itemName);
@@ -169,6 +193,29 @@ async function updatePart(req, res) {
 
     if (!itemName) {
       return res.status(400).json({ status: 'error', message: 'Item Name is required' });
+    }
+
+    const masterConfig = await getMasterConfigDocument();
+
+    if (!(await isMasterValueAllowed('sizes', size, { allowEmpty: true }))) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid Size. Allowed values: ${masterConfig.sizes.join(', ')}`,
+      });
+    }
+
+    if (!(await isMasterValueAllowed('endConnections', endConnection, { allowEmpty: true }))) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid End Connection. Allowed values: ${masterConfig.endConnections.join(', ')}`,
+      });
+    }
+
+    if (!(await isMasterValueAllowed('classes', className, { allowEmpty: true }))) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid Class. Allowed values: ${masterConfig.classes.join(', ')}`,
+      });
     }
 
     part.itemName = itemName;
