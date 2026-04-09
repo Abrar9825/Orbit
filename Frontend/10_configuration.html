@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Management - Orbit MES</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #022758; --primary-light: #1A3A5C; --secondary: #E8F1F8; --tertiary: #95B3CC; }
+        
+        /* MOBILE RESPONSIVE - FORCE ALL ELEMENTS TO BE MOBILE FRIENDLY */
+        @media (max-width: 768px) {
+            body { font-size: 14px !important; }
+            
+            /* Force all grids to single column */
+            .grid { grid-template-columns: 1fr !important; gap: 0.75rem !important; }
+            
+            /* Make all buttons and inputs mobile-friendly */
+            button, input, select, textarea { 
+                min-height: 44px !important;
+                font-size: 16px !important;
+                padding: 0.75rem !important;
+            }
+            
+            /* Stack tabs vertically on mobile */
+            .tab-item { 
+                font-size: 0.75rem !important;
+                padding: 0.5rem 0.75rem !important;
+                justify-content: flex-start !important;
+            }
+            
+            /* Reduce container padding */
+            .max-w-7xl { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+            .px-4, .px-6 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+            .py-3, .py-4 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+            
+            /* Modal responsive */
+            .fixed { padding: 0.5rem !important; }
+            
+            /* Text sizing */
+            h1 { font-size: 1.1rem !important; }
+            h2 { font-size: 1rem !important; }
+            h3 { font-size: 0.95rem !important; }
+            .text-sm { font-size: 0.8rem !important; }
+            .text-xs { font-size: 0.75rem !important; }
+        }
+        
+        /* Primary helpers */
+        .primary-gradient { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; }
+        .primary-btn { 
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white; 
+            box-shadow: 0 2px 8px rgba(0, 64, 64, 0.2);
+            transition: all 0.3s ease;
+        }
+        .primary-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 64, 64, 0.3);
+        }
+        .primary-shadow { box-shadow: 0 8px 20px rgba(2,39,88,0.12); }
+
+        /* Tab styling */
+        .tab-item {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .tab-item:hover {
+            color: var(--primary);
+            background: #f0fdf4;
+        }
+        .tab-item.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Filter-style buttons (match dashboard selector) */
+        .filter-btn {
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.35rem 0.6rem;
+            font-size: 0.75rem;
+            border-radius: 0.5rem;
+            background: #f8fafc;
+            border: 2px solid #e6e7eb;
+            color: #374151;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+        }
+        .filter-btn.active {
+            transform: translateY(-2px);
+            background: linear-gradient(90deg, var(--primary), rgba(2,39,88,0.9)) !important;
+            color: white !important;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.16) !important;
+            border: none !important;
+        }
+        
+        /* Part category buttons - same styling as filter buttons */
+        .part-category-btn {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.35rem 0.6rem;
+            font-size: 0.75rem;
+            border-radius: 0.5rem;
+            background: #f8fafc;
+            border: 2px solid #e6e7eb;
+            color: #374151;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .part-category-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+        }
+        .part-category-btn.active {
+            transform: translateY(-2px);
+            background: linear-gradient(90deg, var(--primary), rgba(2,39,88,0.9)) !important;
+            color: white !important;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.16) !important;
+            border: none !important;
+        }
+
+        /* Card styling */
+        .config-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
+    <!-- Inline SVG favicon and theme color to avoid /favicon.ico 404 and improve mobile appearance -->
+    <meta name="theme-color" content="#022758">
+    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23004040'/><text x='50' y='60' font-size='60' text-anchor='middle' fill='white' font-family='Poppins, Arial' font-weight='700'>F</text></svg>">
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
+    <!-- Success Message -->
+    <div id="successMessage" class="fixed top-5 right-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-6 py-4 rounded-xl shadow-lg hidden items-center gap-3 font-medium z-50 backdrop-blur-sm">
+        <i class="fas fa-check-circle text-lg"></i>
+        <span id="successText">Saved successfully!</span>
+    </div>
+
+    <!-- Top Header Bar -->
+    <div class="primary-gradient">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+            <div class="flex items-center gap-2">
+                <a href="10.1_configuration_view.html" title="Back" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h1 class="text-lg font-semibold text-white">Configuration Management</h1>
+            </div>
+            <button onclick="window.location.href='1.1_dashboard.html'" class="inline-flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-all border border-white/20">
+                <i class="fas fa-gauge"></i> Go to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3">
+        <!-- Tab Navigation -->
+        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden mb-3">
+            <div class="flex border-b border-gray-200 overflow-x-auto">
+                <div class="tab-item active whitespace-nowrap" data-tab="machines" onclick="switchTab('machines')">
+                    <i class="fas fa-cogs"></i>
+                    <span class="hidden sm:inline">Machine Configuration</span>
+                    <span class="sm:hidden">Machines</span>
+                </div>
+                <div class="tab-item whitespace-nowrap" data-tab="parts" onclick="switchTab('parts')">
+                    <i class="fas fa-puzzle-piece"></i>
+                    <span class="hidden sm:inline">Parts Configuration</span>
+                    <span class="sm:hidden">Parts</span>
+                </div>
+                <div class="tab-item whitespace-nowrap" data-tab="bom" onclick="switchTab('bom')">
+                    <i class="fas fa-list-alt"></i>
+                    <span class="hidden sm:inline">BOM Template Management</span>
+                    <span class="sm:hidden">BOM</span>
+                </div>
+                <div class="tab-item whitespace-nowrap" data-tab="pages" onclick="switchTab('pages')">
+                    <i class="fas fa-users-cog"></i>
+                    <span class="hidden sm:inline">User Information & Access Control</span>
+                    <span class="sm:hidden">Users</span>
+                </div>
+                <div class="tab-item whitespace-nowrap" data-tab="masterdata" onclick="switchTab('masterdata')">
+                    <i class="fas fa-database"></i>
+                    <span class="hidden sm:inline">Master Data</span>
+                    <span class="sm:hidden">Master</span>
+                </div>
+            </div>
+            </div>
+
+            <!-- Machines Section -->
+            <div id="machines" class="content-section p-2 sm:p-3">
+                <div class="config-card">
+                    <div class="section-title text-sm" style="color: var(--primary);">
+                        <i class="fas fa-cogs text-sm"></i>
+                        Machine Configuration
+                    </div>
+                    
+                    <!-- Process Type -->
+                    <div class="mb-3">
+                        <label class="block mb-1 text-xs font-medium text-gray-700">Process Type <span class="text-red-500">*</span></label>
+                        <select id="processSelect" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all">
+                            <option value="">Select Process Type</option>
+                            <option value="Casting">Casting</option>
+                            <option value="Machining">Machining</option>
+                            <option value="Assembly">Assembly</option>
+                            <option value="QC">QC</option>
+                            <option value="Paint">Paint</option>
+                            <option value="Final QC">Final QC</option>
+                        </select>
+                    </div>
+
+                    <!-- Machine Details Container -->
+                    <div id="machineDetailsContainer"></div>
+
+                    <!-- Machine Form Fields -->
+                    <div id="machineDetail1">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+                            <div>
+                                <label class="block mb-1 text-xs font-medium text-gray-700">Machine Name</label>
+                                <input type="text" id="machineName1" placeholder="Enter machine name" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-xs font-medium text-gray-700">Machine Code</label>
+                                <input type="text" id="machineCode1" placeholder="Enter machine code" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all">
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-xs font-medium text-gray-700">Size</label>
+                                <input type="text" id="size1" placeholder="Enter size" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all">
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="addMachineDetail()" class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all">
+                                <i class="fas fa-plus"></i> Add More Machine
+                            </button>
+                            <button type="button" onclick="handleAddProcess(event)" class="inline-flex items-center gap-2 px-4 py-1.5 primary-btn rounded-lg text-sm font-medium">
+                                <i class="fas fa-save"></i> Add Machine
+                            </button>
+                            <button type="button" onclick="resetMachineForm()" class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all">
+                                <i class="fas fa-redo"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parts Section -->
+            <div id="parts" class="content-section hidden p-2 sm:p-3">
+                <div class="config-card">
+                    <div class="section-title text-sm" style="color: var(--primary);">
+                        <i class="fas fa-puzzle-piece text-sm"></i>
+                        Part Configuration
+                    </div>
+                    
+                    <!-- Dynamic Inputs Container -->
+                    <div id="partDynamicInputs"></div>
+
+                    <div class="flex items-center gap-2 mt-3">
+                        <button type="button" id="partSubmitBtn" onclick="handleAddPart(event)" class="inline-flex items-center gap-2 px-4 py-1.5 primary-btn rounded-lg text-sm font-medium">
+                            <i class="fas fa-save"></i> <span id="partSubmitText">Add Part</span>
+                        </button>
+                        <button type="button" onclick="resetPartForm()" class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOM Templates Section -->
+            <div id="bom" class="content-section hidden p-2 sm:p-3">
+                <div class="config-card">
+                    <div class="section-title text-sm" style="color: var(--primary);">
+                        <i class="fas fa-list-alt text-sm"></i>
+                        BOM Template
+                    </div>
+
+                    <!-- Dynamic BOM Inputs Container -->
+                    <div id="bomDynamicInputs" class="mb-4"></div>
+                    
+                    <!-- Additional Parts Container -->
+                    <div id="bomPartsContainer" class="mb-4 space-y-3"></div>
+
+                    <!-- Add Part Button -->
+                    <div class="mb-4">
+                        <button type="button" id="addPartBtn" onclick="addBOMPart()" class="inline-flex items-center gap-2 px-4 py-2 primary-btn rounded-lg text-sm font-medium">
+                            <i class="fas fa-plus"></i> Add Part
+                        </button>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="handleAddBOM(event)" class="inline-flex items-center gap-2 px-4 py-1.5 primary-btn rounded-lg text-sm font-medium">
+                            <i class="fas fa-save"></i> Save BOM Template
+                        </button>
+                        <button type="button" onclick="resetBOMForm()" class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Assignment Section - User Management -->
+            <div id="pages" class="content-section hidden p-2 sm:p-3">
+                <div class="bg-white rounded-lg border border-gray-200 p-3">
+                    <!-- Header -->
+                    <div class="flex items-center gap-2 mb-3">
+                        <i class="fas fa-users-cog text-sm" style="color: var(--primary);"></i>
+                        <h2 class="text-sm font-semibold" style="color: var(--primary);">Add New User & Assign Pages</h2>
+                    </div>
+                    
+                    <form id="userFormData" onsubmit="saveUser(event)">
+                        <!-- User Info Section -->
+                        <div class="mb-3">
+                            <h3 class="text-xs font-semibold mb-2 text-gray-900">User Information</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1.5">User Name</label>
+                                    <input type="text" id="userName" required placeholder="Enter name" class="w-full px-3 py-2 bg-white border border-gray-300 rounded text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1.5">Email</label>
+                                    <input type="email" id="userEmail" required placeholder="Enter email" class="w-full px-3 py-2 bg-white border border-gray-300 rounded text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1.5">Password</label>
+                                    <input type="password" id="userPassword" required placeholder="Enter password" class="w-full px-3 py-2 bg-white border border-gray-300 rounded text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1.5">Role</label>
+                                    <select id="userRole" class="w-full px-3 py-2 bg-white border border-gray-300 rounded text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all">
+                                        <option value="User">User</option>
+                                        <option value="Manager">Manager</option>
+                                        <option value="Admin">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Page Permissions Section with Cards -->
+                        <div class="mb-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-sm font-semibold text-gray-900">Select Page Access & CRUD Operations</h3>
+                                <button type="button" onclick="approveAllPages()" class="inline-flex items-center gap-2 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-medium transition-all">
+                                    <i class="fas fa-check-double"></i> Approve All
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="pageCardsContainer">
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex gap-2">
+                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded text-sm font-medium transition-all" style="background: var(--primary);">
+                                <i class="fas fa-save"></i> Save User
+                            </button>
+                            <button type="reset" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded text-sm font-medium hover:bg-gray-50 transition-all">
+                                Clear
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Master Data Section -->
+            <div id="masterdata" class="content-section hidden p-2 sm:p-3">
+                <div class="config-card">
+                    <div class="section-title">
+                        <i class="fas fa-database"></i>
+                        Master Data Management
+                    </div>
+                    <p class="text-xs text-gray-600 mb-4">Manage End Connections, Sizes, and Classes that will appear in dropdowns across the application.</p>
+                    
+                    <!-- End Connection Section -->
+                    <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <h3 class="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
+                            <i class="fas fa-plug"></i> End Connections
+                        </h3>
+                        <div class="space-y-2" id="endConnectionsList">
+                            <!-- Dynamic end connections will be added here -->
+                        </div>
+                        <button type="button" onclick="addEndConnectionRow()" class="mt-3 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-all">
+                            <i class="fas fa-plus"></i> Add End Connection
+                        </button>
+                    </div>
+                    
+                    <!-- Size Section -->
+                    <div class="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                        <h3 class="text-sm font-bold text-green-900 mb-3 flex items-center gap-2">
+                            <i class="fas fa-ruler"></i> Sizes
+                        </h3>
+                        <div class="space-y-2" id="sizesList">
+                            <!-- Dynamic sizes will be added here -->
+                        </div>
+                        <button type="button" onclick="addSizeRow()" class="mt-3 px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 transition-all">
+                            <i class="fas fa-plus"></i> Add Size
+                        </button>
+                    </div>
+                    
+                    <!-- Class Section -->
+                    <div class="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                        <h3 class="text-sm font-bold text-purple-900 mb-3 flex items-center gap-2">
+                            <i class="fas fa-layer-group"></i> Classes
+                        </h3>
+                        <div class="space-y-2" id="classesList">
+                            <!-- Dynamic classes will be added here -->
+                        </div>
+                        <button type="button" onclick="addClassRow()" class="mt-3 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-medium hover:bg-purple-700 transition-all">
+                            <i class="fas fa-plus"></i> Add Class
+                        </button>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="button" onclick="saveMasterData()" class="primary-btn px-6 py-2 rounded-lg text-sm font-semibold">
+                            <i class="fas fa-save"></i> Save All Master Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Permissions Modal -->
+    <div id="viewPermissionsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-white rounded-lg sm:rounded-2xl w-full max-w-[95vw] sm:max-w-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
+            <div class="sticky top-0 text-white p-3 sm:p-4 flex items-center justify-between" style="background: var(--primary);">
+                <h2 class="text-base sm:text-lg font-bold" id="viewModalTitle">User Permissions</h2>
+                <button onclick="closeViewPermissionsModal()" class="w-8 h-8 sm:w-10 sm:h-10 bg-white/10 hover:bg-white/20 rounded-lg flex items-center justify-center transition-colors">
+                    <i class="fas fa-times text-sm sm:text-base"></i>
+                </button>
+            </div>
+            
+            <div class="p-3 sm:p-6">
+                <div id="viewPermissionsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .tab-item.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        
+        .tab-item.active i {
+            color: var(--primary);
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+
+    <script>
+        let machineDetailCount = 1;
+        let bomPartRowCount = 1;
+        let selectedBOMType = 'valve';
+
+        // Tab Switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.content-section').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+            
+            const targetSection = document.getElementById(tabName);
+            if (targetSection) targetSection.classList.remove('hidden');
+            const targetTab = document.querySelector(`.tab-item[data-tab="${tabName}"]`);
+            if (targetTab) targetTab.classList.add('active');
+        }
+
+        // Handle URL hash on load
+        window.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash.substring(1);
+            if (hash === 'parts' || hash === 'bom') {
+                switchTab(hash);
+            }
+            showPartDynamicInputs('valve'); // Initialize Part Configuration with valve inputs
+            showBOMDynamicInputs('valve'); // Initialize BOM with valve inputs
+        });
+
+        // Success Message
+        function showSuccess(message) {
+            const successMsg = document.getElementById('successMessage');
+            document.getElementById('successText').textContent = message;
+            successMsg.classList.remove('hidden');
+            successMsg.classList.add('flex');
+            setTimeout(() => {
+                successMsg.classList.add('hidden');
+                successMsg.classList.remove('flex');
+            }, 3000);
+        }
+
+        // Machine Functions
+        function addMachineDetail() {
+            machineDetailCount++;
+            const container = document.getElementById('machineDetailsContainer');
+            const newSection = document.createElement('div');
+            newSection.id = `machineDetail${machineDetailCount}`;
+            newSection.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+                    <div>
+                        <label class="block mb-1 text-xs font-medium text-gray-700">Machine Name</label>
+                        <input type="text" id="machineName${machineDetailCount}" placeholder="Enter machine name" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-xs font-medium text-gray-700">Machine Code</label>
+                        <input type="text" id="machineCode${machineDetailCount}" placeholder="Enter machine code" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-xs font-medium text-gray-700">Size</label>
+                        <input type="text" id="size${machineDetailCount}" placeholder="Enter size" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all">
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 mb-3">
+                    <button type="button" onclick="removeMachineDetail(${machineDetailCount})" class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all">
+                        <i class="fas fa-trash text-red-500"></i> Remove
+                    </button>
+                </div>
+            `;
+            container.appendChild(newSection);
+        }
+
+        function removeMachineDetail(num) {
+            document.getElementById(`machineDetail${num}`).remove();
+        }
+
+        function resetMachineForm() {
+            document.getElementById('processSelect').value = '';
+            for (let i = 1; i <= machineDetailCount; i++) {
+                const nameInput = document.getElementById(`machineName${i}`);
+                const codeInput = document.getElementById(`machineCode${i}`);
+                const sizeInput = document.getElementById(`size${i}`);
+                if (nameInput) nameInput.value = '';
+                if (codeInput) codeInput.value = '';
+                if (sizeInput) sizeInput.value = '';
+            }
+        }
+
+        function handleAddProcess(e) {
+            e.preventDefault();
+            const process = document.getElementById('processSelect').value;
+            
+            if (!process) {
+                alert('Please select a process');
+                return;
+            }
+
+            const machines = [];
+            for (let i = 1; i <= machineDetailCount; i++) {
+                const nameInput = document.getElementById(`machineName${i}`);
+                const codeInput = document.getElementById(`machineCode${i}`);
+                const sizeInput = document.getElementById(`size${i}`);
+                
+                if (nameInput && nameInput.value && codeInput && codeInput.value) {
+                    machines.push({
+                        name: nameInput.value,
+                        code: codeInput.value,
+                        size: sizeInput ? sizeInput.value : '',
+                        process: process
+                    });
+                }
+            }
+
+            if (machines.length === 0) {
+                alert('Please fill in at least one machine detail');
+                return;
+            }
+
+            const existingMachines = JSON.parse(localStorage.getItem('machines') || '[]');
+            const updatedMachines = [...existingMachines, ...machines];
+            localStorage.setItem('machines', JSON.stringify(updatedMachines));
+
+            showSuccess('Machine(s) added successfully!');
+            resetMachineForm();
+        }
+
+        // Part Functions
+        let selectedPartCategory = 'valve';
+
+        function selectPartCategory(category) {
+            selectedPartCategory = category;
+            
+            // Update button styles
+            document.querySelectorAll('.part-category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const selectedBtn = document.querySelector(`.part-category-btn[data-category="${category}"]`);
+            if (selectedBtn) selectedBtn.classList.add('active');
+            
+            showPartDynamicInputs(category);
+        }
+
+        function showPartDynamicInputs(category) {
+            const container = document.getElementById('partDynamicInputs');
+            if (!container) return;
+            
+            const valveInputs = `
+                <div class='bg-white p-3 rounded-xl border-2 border-slate-200'>
+                    <div class='grid grid-cols-1 md:grid-cols-2 gap-2'>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>ITEM NAME <span class='text-red-500'>*</span></label>
+                            <input id='part_valve_item' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Enter item name'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>MODEL NO</label>
+                            <input id='part_valve_model' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Enter model number'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>SIZE <span class='text-red-500'>*</span></label>
+                            <input id='part_valve_size' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Enter size'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>MOC <span class='text-red-500'>*</span></label>
+                            <input id='part_valve_moc' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Material of Construction'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>CLASS</label>
+                            <input id='part_valve_class' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Enter class'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>REMARK</label>
+                            <input id='part_valve_remarks' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Enter remark'>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const partsInputs = `
+                <div class='bg-white p-3 rounded-xl border-2 border-slate-200'>
+                    <div class='grid grid-cols-1 md:grid-cols-3 gap-2'>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>ITEM <span class='text-red-500'>*</span></label>
+                            <input id='part_parts_item' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Enter item name'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>EQUIPMENT</label>
+                            <input id='part_parts_equipment' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Equipment name'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>MOC <span class='text-red-500'>*</span></label>
+                            <input id='part_parts_moc' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Material of Construction'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>REMARKS</label>
+                            <input id='part_parts_remarks' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Remarks'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>QTY <span class='text-red-500'>*</span></label>
+                            <input id='part_parts_qty' type='number' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='0'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>INVOICE</label>
+                            <input id='part_parts_invoice' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Invoice number'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>PARTY</label>
+                            <input id='part_parts_party' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Party name'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>DATE</label>
+                            <input id='part_parts_date' type='date' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all'>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const assetInputs = `
+                <div class='bg-white p-3 rounded-xl border-2 border-slate-200'>
+                    <div class='grid grid-cols-1 md:grid-cols-3 gap-2'>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>TYPE <span class='text-red-500'>*</span></label>
+                            <input id='part_asset_type' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Asset type'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>ITEM <span class='text-red-500'>*</span></label>
+                            <input id='part_asset_item' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Item name'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>SR NO <span class='text-red-500'>*</span></label>
+                            <input id='part_asset_srNo' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Serial number'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>MOC</label>
+                            <input id='part_asset_moc' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Material of Construction'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>SIZE</label>
+                            <input id='part_asset_size' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Size'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>BUY FROM</label>
+                            <input id='part_asset_buyFrom' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Supplier'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>BUY LOC</label>
+                            <input id='part_asset_buyLoc' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Purchase location'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>REMARKS</label>
+                            <input id='part_asset_remarks' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='Remarks'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>QTY VALUE <span class='text-red-500'>*</span></label>
+                            <input id='part_asset_qtyValue' type='number' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all' placeholder='0'>
+                        </div>
+                        <div>
+                            <label class='block text-xs font-semibold text-slate-600 mb-1'>STATUS</label>
+                            <select id='part_asset_status' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all'>
+                                <option value=''>Select Status</option>
+                                <option value='Active'>Active</option>
+                                <option value='Inactive'>Inactive</option>
+                                <option value='Maintenance'>Maintenance</option>
+                                <option value='Retired'>Retired</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            if (category === 'valve') {
+                container.innerHTML = valveInputs;
+            } else if (category === 'parts') {
+                container.innerHTML = partsInputs;
+            }
+        }
+
+        function resetPartForm() {
+            showPartDynamicInputs(selectedPartCategory);
+        }
+
+        function handleAddPart(e) {
+            e.preventDefault();
+            let part = null;
+            
+            if (selectedPartCategory === 'valve') {
+                part = {
+                    category: 'Valve',
+                    itemName: document.getElementById('part_valve_item')?.value || '',
+                    modelNo: document.getElementById('part_valve_model')?.value || '',
+                    size: document.getElementById('part_valve_size')?.value || '',
+                    moc: document.getElementById('part_valve_moc')?.value || '',
+                    class: document.getElementById('part_valve_class')?.value || '',
+                    remark: document.getElementById('part_valve_remarks')?.value || ''
+                };
+            } else if (selectedPartCategory === 'parts') {
+                part = {
+                    category: 'Parts',
+                    item: document.getElementById('part_parts_item')?.value || '',
+                    equipment: document.getElementById('part_parts_equipment')?.value || '',
+                    moc: document.getElementById('part_parts_moc')?.value || '',
+                    remarks: document.getElementById('part_parts_remarks')?.value || '',
+                    qty: document.getElementById('part_parts_qty')?.value || '',
+                    invoice: document.getElementById('part_parts_invoice')?.value || '',
+                    party: document.getElementById('part_parts_party')?.value || '',
+                    date: document.getElementById('part_parts_date')?.value || ''
+                };
+            }
+
+            if (!part) {
+                alert('Please fill in required fields');
+                return;
+            }
+
+            const existingParts = JSON.parse(localStorage.getItem('parts') || '[]');
+            
+            // Check if we're editing an existing part (partIndex in URL)
+            const params = new URLSearchParams(window.location.search);
+            const partIndex = params.get('partIndex');
+            
+            if (partIndex !== null && partIndex !== '') {
+                // Update existing part
+                const index = parseInt(partIndex);
+                if (index >= 0 && index < existingParts.length) {
+                    existingParts[index] = part;
+                    localStorage.setItem('parts', JSON.stringify(existingParts));
+                    showSuccess('Part updated successfully!');
+                    // Clear the URL parameters and redirect to view page
+                    setTimeout(() => {
+                        window.location.href = '10.1_configuration_view.html#parts';
+                    }, 1000);
+                    return;
+                }
+            }
+            
+            // Add new part
+            existingParts.push(part);
+            localStorage.setItem('parts', JSON.stringify(existingParts));
+
+            showSuccess('Part added successfully!');
+            resetPartForm();
+            loadPartsDropdown();
+        }
+
+        // BOM Functions
+        let bomPartCounter = 1;
+
+        function showBOMDynamicInputs(type) {
+            const container = document.getElementById('bomDynamicInputs');
+            if (!container) return;
+
+            if (type === 'valve') {
+                container.innerHTML = `
+                    <div class="bg-white p-3 rounded-xl border-2 border-slate-200">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block mb-1.5 text-xs font-semibold text-slate-600">Valve Name <span class="text-red-500">*</span></label>
+                                <select id="bomValveName" required class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all">
+                                    <option value="" disabled selected>Select valve type</option>
+                                    <option value="Butterfly Valve">Butterfly Valve</option>
+                                    <option value="Dual Plate Check Valve">Dual Plate Check Valve</option>
+                                    <option value="Air Valve">Air Valve</option>
+                                    <option value="Sluice Valve">Sluice Valve</option>
+                                    <option value="Non Return Valve">Non Return Valve</option>
+                                    <option value="Flow Control Valve">Flow Control Valve</option>
+                                    <option value="Pressure Reducing Valve">Pressure Reducing Valve</option>
+                                    <option value="Altitude Control Valve">Altitude Control Valve</option>
+                                    <option value="On/Off Valve">On/Off Valve</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-1.5 text-xs font-semibold text-slate-600">Size <span class="text-red-500">*</span></label>
+                                <input type="text" id="bomValveSize" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter size">
+                            </div>
+                            <div>
+                                <label class="block mb-1.5 text-xs font-semibold text-slate-600">Class <span class="text-red-500">*</span></label>
+                                <input type="text" id="bomValveClass" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter class">
+                            </div>
+                            <div>
+                                <label class="block mb-1.5 text-xs font-semibold text-slate-600">MOC <span class="text-red-500">*</span></label>
+                                <input type="text" id="bomValveMOC" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Material of Construction">
+                            </div>
+                            <div>
+                                <label class="block mb-1.5 text-xs font-semibold text-slate-600">End Connection <span class="text-red-500">*</span></label>
+                                <input type="text" id="bomValveEndConnection" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter end connection">
+                            </div>
+                            <div>
+                                <label class="block mb-1.5 text-xs font-semibold text-slate-600">Flanged Std <span class="text-red-500">*</span></label>
+                                <input type="text" id="bomValveFlangedStd" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter flanged standard">
+                            </div>
+                            <div>
+                                <label class="block mb-1.5 text-xs font-semibold text-slate-600">Operation <span class="text-red-500">*</span></label>
+                                <select id="bomValveOperation" required class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all">
+                                    <option value="" disabled selected>Select operation type</option>
+                                    <option value="Gear">Gear</option>
+                                    <option value="Manual">Manual</option>
+                                    <option value="Actuator">Actuator</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'parts') {
+                container.innerHTML = `
+                    <div class="bg-white p-3 rounded-xl border-2 border-slate-200">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block mb-1.5 text-xs font-semibold text-slate-600">Part Name <span class="text-red-500">*</span></label>
+                                <input type="text" id="bomPartName" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter part name">
+                            </div>
+                            <div>
+                                <label class="block mb-1.5 text-xs font-semibold text-slate-600">Size <span class="text-red-500">*</span></label>
+                                <input type="text" id="bomPartSize" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter size">
+                            </div>
+                            <div>
+                                <label class="block mb-1.5 text-xs font-semibold text-slate-600">Quantity <span class="text-red-500">*</span></label>
+                                <input type="number" id="bomPartQuantity" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="block mb-1.5 text-xs font-semibold text-slate-600">Remarks</label>
+                                <input type="text" id="bomPartRemarks" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter remarks">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function selectBOMType(type) {
+            selectedBOMType = type;
+
+            // Update button styles
+            document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            const selectedBtn = document.querySelector(`.filter-btn[data-filter="${type}"]`);
+            if (selectedBtn) selectedBtn.classList.add('active');
+
+            // Show dynamic inputs based on type
+            showBOMDynamicInputs(type);
+        }
+
+        function addBOMPart() {
+            const container = document.getElementById('bomPartsContainer');
+            const partId = bomPartCounter++;
+            
+            const partRow = document.createElement('div');
+            partRow.id = `bomPart${partId}`;
+            partRow.className = 'bg-blue-50 p-3 rounded-lg border-2 border-blue-200';
+            partRow.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-sm font-semibold text-blue-800">Part ${partId}</h4>
+                    <button type="button" onclick="removeBOMPart(${partId})" class="px-2 py-1 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600 transition-all">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div>
+                        <label class="block mb-1 text-xs font-medium text-gray-700">Part Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="bomPartName${partId}" placeholder="Enter part name" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-xs font-medium text-gray-700">Size <span class="text-red-500">*</span></label>
+                        <input type="text" id="bomPartSize${partId}" placeholder="Enter size" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-xs font-medium text-gray-700">Quantity <span class="text-red-500">*</span></label>
+                        <input type="number" id="bomPartQty${partId}" placeholder="Enter quantity" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(partRow);
+        }
+
+        function removeBOMPart(partId) {
+            const partRow = document.getElementById(`bomPart${partId}`);
+            if (partRow) partRow.remove();
+        }
+
+        function resetBOMForm() {
+            showBOMDynamicInputs(selectedBOMType);
+            const container = document.getElementById('bomPartsContainer');
+            container.innerHTML = '';
+            bomPartCounter = 1;
+        }
+
+        function handleAddBOM(e) {
+            e.preventDefault();
+
+            let bomData = {
+                type: selectedBOMType.charAt(0).toUpperCase() + selectedBOMType.slice(1),
+                additionalParts: []
+            };
+
+            // Collect main form data based on type
+            if (selectedBOMType === 'valve') {
+                const valveName = document.getElementById('bomValveName')?.value || '';
+                const valveSize = document.getElementById('bomValveSize')?.value || '';
+                const valveClass = document.getElementById('bomValveClass')?.value || '';
+                const valveMOC = document.getElementById('bomValveMOC')?.value || '';
+                const valveEndConnection = document.getElementById('bomValveEndConnection')?.value || '';
+                const valveFlangedStd = document.getElementById('bomValveFlangedStd')?.value || '';
+                const valveOperation = document.getElementById('bomValveOperation')?.value || '';
+
+                if (!valveName || !valveSize || !valveClass || !valveMOC || !valveEndConnection || !valveFlangedStd || !valveOperation) {
+                    alert('Please fill in all required valve fields');
+                    return;
+                }
+
+                bomData = {
+                    ...bomData,
+                    valveName: valveName,
+                    valveSize: valveSize,
+                    valveClass: valveClass,
+                    valveMOC: valveMOC,
+                    valveEndConnection: valveEndConnection,
+                    valveFlangedStd: valveFlangedStd,
+                    valveOperation: valveOperation
+                };
+            } else if (selectedBOMType === 'parts') {
+                const partName = document.getElementById('bomPartName')?.value || '';
+                const partSize = document.getElementById('bomPartSize')?.value || '';
+                const quantity = document.getElementById('bomPartQuantity')?.value || '';
+                const remarks = document.getElementById('bomPartRemarks')?.value || '';
+
+                if (!partName || !partSize || !quantity) {
+                    alert('Please fill in part name, size and quantity');
+                    return;
+                }
+
+                bomData = {
+                    ...bomData,
+                    partName: partName,
+                    partSize: partSize,
+                    partQuantity: quantity,
+                    partRemarks: remarks
+                };
+            }
+            
+            // Collect additional parts from Add Part button
+            for (let i = 1; i < bomPartCounter; i++) {
+                const nameInput = document.getElementById(`bomPartName${i}`);
+                const sizeInput = document.getElementById(`bomPartSize${i}`);
+                const qtyInput = document.getElementById(`bomPartQty${i}`);
+                
+                if (nameInput && nameInput.value && sizeInput && sizeInput.value && qtyInput && qtyInput.value) {
+                    bomData.additionalParts.push({
+                        partName: nameInput.value,
+                        size: sizeInput.value,
+                        quantity: qtyInput.value
+                    });
+                }
+            }
+
+            const existingBOMs = JSON.parse(localStorage.getItem('boms') || '[]');
+            existingBOMs.push(bomData);
+            localStorage.setItem('boms', JSON.stringify(existingBOMs));
+
+            showSuccess('BOM Template created successfully!');
+            resetBOMForm();
+        }
+
+        // Legacy functions for compatibility
+        function loadPartsDropdown() {}
+
+        // Page Assignment Functions
+        function toggleParent(parentName) {
+            const childrenDiv = document.getElementById(`children_${parentName}`);
+            const icon = document.getElementById(`icon_${parentName}`);
+            childrenDiv.classList.toggle('hidden');
+            icon.classList.toggle('fa-chevron-right');
+            icon.classList.toggle('fa-chevron-down');
+        }
+
+        function toggleChildren(parentName) {
+            const parentCheckbox = document.getElementById(`parent_${parentName}`);
+            const childCheckboxes = document.querySelectorAll(`.child-checkbox.${parentName}`);
+            childCheckboxes.forEach(cb => cb.checked = parentCheckbox.checked);
+            updateSummary();
+        }
+
+        function updateParentState(parentName) {
+            const parentCheckbox = document.getElementById(`parent_${parentName}`);
+            const childCheckboxes = document.querySelectorAll(`.child-checkbox.${parentName}`);
+            const allChecked = Array.from(childCheckboxes).every(cb => cb.checked);
+            const someChecked = Array.from(childCheckboxes).some(cb => cb.checked);
+            
+            parentCheckbox.checked = allChecked;
+            parentCheckbox.indeterminate = someChecked && !allChecked;
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const allCheckboxes = document.querySelectorAll('.child-checkbox:checked');
+            const summaryDiv = document.getElementById('selectedSummary');
+            
+            if (allCheckboxes.length === 0) {
+                summaryDiv.innerHTML = '<span class="text-xs bg-gray-300 text-gray-700 px-2.5 py-1 rounded-full font-medium">None selected</span>';
+                return;
+            }
+
+            const labels = {
+                'dashboard_view': '📊 Dashboard View',
+                'new_order': '📝 New Order',
+                'order_details': '📋 Order Details',
+                'order_tracking': '📍 Order Tracking',
+                'stock_assets': '📦 Stock Assets',
+                'stock_mgmt': '📊 Stock Mgmt',
+                'expense_mgmt': '💰 Expense Mgmt',
+                'petty_cash': '💵 Petty Cash',
+                'worker_mgmt': '👥 Worker Mgmt',
+                'worker_attendance': '✓ Attendance',
+                'worker_tracking': '📍 Worker Track'
+            };
+
+            summaryDiv.innerHTML = Array.from(allCheckboxes)
+                .map(cb => `<span class="text-xs bg-blue-500 text-white px-2.5 py-1 rounded-full font-medium">${labels[cb.value]}</span>`)
+                .join('');
+        }
+
+        function selectAllItems() {
+            document.querySelectorAll('.parent-checkbox').forEach(cb => cb.checked = true);
+            document.querySelectorAll('.child-checkbox').forEach(cb => cb.checked = true);
+            updateSummary();
+        }
+
+        function clearAllItems() {
+            document.querySelectorAll('.parent-checkbox').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.child-checkbox').forEach(cb => cb.checked = false);
+            updateSummary();
+        }
+
+        function savePageSelection() {
+            const selectedCheckboxes = document.querySelectorAll('.child-checkbox:checked');
+            const selected = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+            if (selected.length === 0) {
+                alert('Please select at least one item!');
+                return;
+            }
+
+            const assignment = {
+                timestamp: new Date().toISOString(),
+                selectedPages: selected,
+                count: selected.length
+            };
+
+            localStorage.setItem('pageAssignment', JSON.stringify(assignment));
+            showSuccess(`Configuration saved for ${selected.length} selected items!`);
+            console.log('Selected items:', selected);
+        }
+
+        // ==================== USER & PAGE ASSIGNMENT FUNCTIONS ====================
+        const systemPages = [
+            { id: '01', name: 'Orders Dashboard', file: '01_dashboard.html' },
+            { id: '06', name: 'Worker Management', file: '06_worker_management_new.html' },
+            { id: '07', name: 'Stock Management', file: '07_stock_management.html' },
+            { id: '09', name: 'Expense Management', file: '09_expense_management.html' },
+            { id: '10.1', name: 'Configuration View', file: '10.1_configuration_view.html' }
+        ];
+
+        let OrbitUsers = [];
+        let editingUserId = null;
+
+        function loadOrbitUsers() {
+            const stored = localStorage.getItem('OrbitUsers');
+            OrbitUsers = stored ? JSON.parse(stored) : [
+                {
+                    id: 'U001',
+                    name: 'Admin User',
+                    email: 'admin@Orbit.com',
+                    password: 'admin123',
+                    role: 'Admin',
+                    permissions: systemPages.reduce((acc, page) => {
+                        acc[page.id] = { create: true, read: true, update: true, delete: true };
+                        return acc;
+                    }, {})
+                }
+            ];
+            
+            if (!stored) {
+                localStorage.setItem('OrbitUsers', JSON.stringify(OrbitUsers));
+            }
+            
+            renderOrbitUsers();
+            updateUserStats();
+        }
+
+        function renderOrbitUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            
+            if (!tbody) return;
+            
+            if (OrbitUsers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-12">
+                            <div class="flex flex-col items-center gap-3">
+                                <i class="fas fa-users text-gray-300 text-5xl"></i>
+                                <p class="text-gray-500 font-medium text-sm">No users found</p>
+                                <button onclick="openAddUserModal()" class="primary-btn px-4 py-2 rounded-lg font-semibold text-xs">
+                                    <i class="fas fa-plus mr-2"></i>Add First User
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = OrbitUsers.map(user => {
+                const assignedPages = Object.keys(user.permissions || {}).length;
+                const roleColors = {
+                    'Admin': 'bg-red-100 text-red-700',
+                    'Manager': 'bg-blue-100 text-blue-700',
+                    'User': 'bg-green-100 text-green-700'
+                };
+                
+                return `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs" style="background: linear-gradient(135deg, var(--primary), var(--primary-light));">
+                                    ${user.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-800 text-xs">${user.name}</p>
+                                    <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${roleColors[user.role] || 'bg-gray-100 text-gray-700'}">
+                                        ${user.role}
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-gray-600 text-xs">${user.email}</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold" style="background: rgba(2,39,88,0.1); color: var(--primary);">
+                                <i class="fas fa-file-alt"></i>
+                                ${assignedPages} page${assignedPages !== 1 ? 's' : ''}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-center gap-2">
+                                <button onclick="viewUserPermissions('${user.id}')" class="px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-xs font-medium transition-colors" title="View Permissions">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="editOrbitUser('${user.id}')" class="px-2 py-1 text-white rounded text-xs font-medium transition-colors" style="background: linear-gradient(135deg, var(--primary), var(--primary-light));" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteOrbitUser('${user.id}')" class="px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-medium transition-colors" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderPermissionsTable(userPermissions = {}) {
+            const container = document.getElementById('pageCardsContainer');
+            if (!container) return;
+            
+            container.innerHTML = systemPages.map(page => {
+                // Pre-check all CRUD operations for all pages by default
+                const perms = userPermissions[page.id] || { create: true, read: true, update: true, delete: true };
+                
+                return `
+                    <div class="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-all">
+                        <div class="mb-3">
+                            <h4 class="text-sm font-semibold mb-0.5" style="color: var(--primary);">${page.name}</h4>
+                            <p class="text-xs text-gray-500">${page.file}</p>
+                        </div>
+                        
+                        <div class="space-y-1.5">
+                            <label class="flex items-center gap-2 cursor-pointer p-1 rounded">
+                                <input type="checkbox" class="w-3.5 h-3.5 cursor-pointer" style="accent-color: var(--primary);" data-page="${page.id}" data-perm="create" ${perms.create ? 'checked' : ''}>
+                                <i class="fas fa-circle text-green-600" style="font-size: 6px;"></i>
+                                <span class="text-xs font-medium text-gray-700">Create</span>
+                            </label>
+                            
+                            <label class="flex items-center gap-2 cursor-pointer p-1 rounded">
+                                <input type="checkbox" class="w-3.5 h-3.5 cursor-pointer" style="accent-color: var(--primary);" data-page="${page.id}" data-perm="read" ${perms.read ? 'checked' : ''}>
+                                <i class="fas fa-circle text-blue-600" style="font-size: 6px;"></i>
+                                <span class="text-xs font-medium text-gray-700">Read</span>
+                            </label>
+                            
+                            <label class="flex items-center gap-2 cursor-pointer p-1 rounded">
+                                <input type="checkbox" class="w-3.5 h-3.5 cursor-pointer" style="accent-color: var(--primary);" data-page="${page.id}" data-perm="update" ${perms.update ? 'checked' : ''}>
+                                <i class="fas fa-circle text-yellow-600" style="font-size: 6px;"></i>
+                                <span class="text-xs font-medium text-gray-700">Update</span>
+                            </label>
+                            
+                            <label class="flex items-center gap-2 cursor-pointer p-1 rounded">
+                                <input type="checkbox" class="w-3.5 h-3.5 cursor-pointer" style="accent-color: var(--primary);" data-page="${page.id}" data-perm="delete" ${perms.delete ? 'checked' : ''}>
+                                <i class="fas fa-circle text-red-600" style="font-size: 6px;"></i>
+                                <span class="text-xs font-medium text-gray-700">Delete</span>
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleAllPagePerms(pageId, checked) {
+            const checkboxes = document.querySelectorAll(`input[data-page="${pageId}"][data-perm]`);
+            checkboxes.forEach(cb => cb.checked = checked);
+        }
+
+        function approveAllPages() {
+            const allCheckboxes = document.querySelectorAll('input[data-page][data-perm]');
+            allCheckboxes.forEach(cb => cb.checked = true);
+        }
+
+        function openAddUserModal() {
+            editingUserId = null;
+            document.getElementById('userFormData').reset();
+            renderPermissionsTable();
+            // Scroll to form
+            document.getElementById('userFormData').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function getUserById(userId) {
+            if (!userId) return null;
+            const normalizedId = String(userId).trim();
+            return OrbitUsers.find(u => String(u.id) === normalizedId);
+        }
+
+        function editOrbitUser(userId) {
+            const user = getUserById(userId);
+            if (!user) return;
+
+            editingUserId = String(user.id);
+            document.getElementById('userName').value = user.name;
+            document.getElementById('userEmail').value = user.email;
+            document.getElementById('userPassword').value = user.password;
+            document.getElementById('userRole').value = user.role;
+            
+            renderPermissionsTable(user.permissions || {});
+            document.getElementById('userFormData').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function deleteOrbitUser(userId) {
+            const user = getUserById(userId);
+            if (!user) return;
+            
+            if (!confirm(`Delete user "${user.name}"? This action cannot be undone.`)) return;
+            
+            OrbitUsers = OrbitUsers.filter(u => String(u.id) !== String(userId));
+            localStorage.setItem('OrbitUsers', JSON.stringify(OrbitUsers));
+            renderOrbitUsers();
+            updateUserStats();
+            showSuccess('User deleted successfully!');
+        }
+
+        function viewUserPermissions(userId) {
+            const user = getUserById(userId);
+            if (!user) return;
+            
+            document.getElementById('viewModalTitle').textContent = `${user.name}'s Permissions`;
+            
+            const content = document.getElementById('viewPermissionsContent');
+            const assignedPages = Object.entries(user.permissions || {});
+            
+            if (assignedPages.length === 0) {
+                content.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-ban text-gray-300 text-5xl mb-3"></i>
+                        <p class="text-gray-500 text-sm">No permissions assigned</p>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="space-y-3">
+                        ${assignedPages.map(([pageId, perms]) => {
+                            const page = systemPages.find(p => p.id === pageId);
+                            if (!page) return '';
+                            
+                            const permsList = [];
+                            if (perms.create) permsList.push('<span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold"><i class="fas fa-plus-circle"></i> Create</span>');
+                            if (perms.read) permsList.push('<span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold"><i class="fas fa-eye"></i> Read</span>');
+                            if (perms.update) permsList.push('<span class="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold"><i class="fas fa-edit"></i> Update</span>');
+                            if (perms.delete) permsList.push('<span class="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold"><i class="fas fa-trash"></i> Delete</span>');
+                            
+                            return `
+                                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h4 class="font-semibold text-gray-800 text-xs">${page.name}</h4>
+                                        <span class="text-xs text-gray-500">${page.file}</span>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${permsList.join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }
+            
+            document.getElementById('viewPermissionsModal').classList.remove('hidden');
+        }
+
+        function closeUserModal() {
+            editingUserId = null;
+        }
+
+        function closeViewPermissionsModal() {
+            document.getElementById('viewPermissionsModal').classList.add('hidden');
+        }
+
+        function setInputValue(id, value) {
+            if (value === undefined || value === null) return;
+            const element = document.getElementById(id);
+            if (element) element.value = value;
+        }
+
+        function prefillMachineForm(values = {}) {
+            const process = values.process || values.processType;
+            const machineName = values.machineName || values.name;
+            setInputValue('processSelect', process);
+            setInputValue('machineName1', machineName);
+            setInputValue('machineCode1', values.machineCode || values.code);
+            setInputValue('size1', values.size);
+        }
+
+        function prefillPartForm(values = {}) {
+            const category = (values.category || values.partCategory || '').toLowerCase();
+            if (category) selectPartCategory(category);
+            const fill = (id, val) => setInputValue(id, val);
+            
+            if (category === 'valve') {
+                fill('part_valve_item', values.itemName || values.item || values.part_name || values.partName);
+                fill('part_valve_model', values.modelNo || values.model);
+                fill('part_valve_size', values.size);
+                fill('part_valve_moc', values.moc);
+                fill('part_valve_class', values.class);
+                fill('part_valve_remarks', values.remark || values.remarks);
+            } else if (category === 'pump') {
+                fill('part_pump_item', values.itemName || values.item || values.part_name || values.partName);
+                fill('part_pump_model', values.modelNo || values.model);
+                fill('part_pump_moc', values.moc);
+                fill('part_pump_remarks', values.remark || values.remarks);
+                fill('part_pump_qty', values.qty);
+            } else if (category === 'parts') {
+                fill('part_parts_item', values.item || values.part_name || values.partName);
+                fill('part_parts_equipment', values.equipment);
+                fill('part_parts_moc', values.moc);
+                fill('part_parts_remarks', values.remarks);
+                fill('part_parts_qty', values.qty);
+                fill('part_parts_invoice', values.invoice);
+                fill('part_parts_party', values.party);
+                fill('part_parts_date', values.date);
+            }
+        }
+
+        function prefillBOMForm(values = {}) {
+            const category = (values.bomCategory || values.type || '').toLowerCase();
+            if (category) selectBOMType(category);
+            
+            // For parts BOM
+            setInputValue('bomPartName', values.partName);
+            setInputValue('bomPartSize', values.partSize || values.size);
+            setInputValue('bomPartQuantity', values.partQuantity || values.qty);
+            setInputValue('bomPartRemarks', values.partRemarks || values.remarks);
+            
+            // For valve BOM
+            setInputValue('bomValveName', values.valveName);
+            setInputValue('bomValveSize', values.valveSize);
+            setInputValue('bomValveClass', values.valveClass);
+            setInputValue('bomValveMOC', values.valveMOC);
+            setInputValue('bomValveEndConnection', values.valveEndConnection);
+            setInputValue('bomValveFlangedStd', values.valveFlangedStd);
+            setInputValue('bomValveOperation', values.valveOperation);
+        }
+
+        function handleQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab');
+            const userId = params.get('userId');
+            const machineIndex = params.get('machineIndex');
+            const partIndex = params.get('partIndex');
+            const bomIndex = params.get('bomIndex');
+
+            // Priority 1: Check for specific index parameters (edit mode)
+            if (machineIndex !== null && machineIndex !== '') {
+                const machines = JSON.parse(localStorage.getItem('machines') || '[]');
+                const machine = machines[parseInt(machineIndex)];
+                if (machine) {
+                    switchTab('machines');
+                    setTimeout(() => {
+                        setInputValue('processSelect', machine.process);
+                        setInputValue('machineName1', machine.name);
+                        setInputValue('machineCode1', machine.code);
+                        setInputValue('size1', machine.size);
+                    }, 200);
+                }
+                return; // Exit early to prevent other handlers
+            }
+
+            if (partIndex !== null && partIndex !== '') {
+                const parts = JSON.parse(localStorage.getItem('parts') || '[]');
+                const part = parts[parseInt(partIndex)];
+                if (part) {
+                    switchTab('parts');
+                    const category = (part.category || '').toLowerCase();
+                    
+                    setTimeout(() => {
+                        if (category) selectPartCategory(category);
+                        
+                        setTimeout(() => {
+                            if (category === 'valve') {
+                                setInputValue('part_valve_item', part.item || part.itemName);
+                                setInputValue('part_valve_size', part.size);
+                                setInputValue('part_valve_class', part.class);
+                                setInputValue('part_valve_moc', part.moc);
+                                setInputValue('part_valve_end_connection', part.endConnection);
+                                setInputValue('part_valve_flanged_std', part.flangedStd);
+                                setInputValue('part_valve_remarks', part.remark || part.remarks);
+                            } else if (category === 'parts') {
+                                setInputValue('part_parts_name', part.part_name || part.partName);
+                                setInputValue('part_parts_qty', part.qty || part.quantity);
+                                setInputValue('part_parts_make', part.make);
+                                setInputValue('part_parts_material', part.material);
+                                setInputValue('part_parts_grade', part.grade);
+                                setInputValue('part_parts_remarks', part.remark || part.remarks);
+                            }
+                        }, 300);
+                    }, 200);
+                }
+                return; // Exit early
+            }
+
+            if (bomIndex !== null && bomIndex !== '') {
+                const boms = JSON.parse(localStorage.getItem('boms') || '[]');
+                const bom = boms[parseInt(bomIndex)];
+                if (bom) {
+                    switchTab('bom');
+                    const type = (bom.type || '').toLowerCase();
+                    
+                    setTimeout(() => {
+                        if (type) selectBOMType(type);
+                        
+                        setTimeout(() => {
+                            if (type === 'valve') {
+                                setInputValue('bomValveName', bom.valveName);
+                                setInputValue('bomValveSize', bom.valveSize);
+                                setInputValue('bomValveClass', bom.valveClass);
+                                setInputValue('bomValveMOC', bom.valveMOC);
+                                setInputValue('bomValveEndConnection', bom.valveEndConnection);
+                                setInputValue('bomValveFlangedStd', bom.valveFlangedStd);
+                                setInputValue('bomValveOperation', bom.valveOperation);
+                            } else if (type === 'parts') {
+                                setInputValue('bomPartName', bom.partName);
+                                setInputValue('bomPartQuantity', bom.partQuantity);
+                                setInputValue('bomPartRemarks', bom.partRemarks);
+                            }
+                        }, 300);
+                    }, 200);
+                }
+                return; // Exit early
+            }
+
+            // Priority 2: Handle userId
+            if (userId) {
+                switchTab('pages');
+                editOrbitUser(userId);
+                return;
+            }
+
+            // Priority 3: Handle generic tab parameter
+            if (tabParam) {
+                const normalizedTab = tabParam === 'users' ? 'pages' : tabParam;
+                if (document.getElementById(normalizedTab)) {
+                    switchTab(normalizedTab);
+                }
+            }
+
+            // Legacy query param handling (for backward compatibility)
+            const machinePayload = {
+                machineCode: params.get('machineCode'),
+                machineName: params.get('machineName'),
+                process: params.get('process'),
+                capacity: params.get('capacity')
+            };
+            if (Object.values(machinePayload).some(value => value) && !machineIndex) {
+                switchTab('machines');
+                prefillMachineForm(machinePayload);
+            }
+
+            const partPayload = {
+                category: params.get('category'),
+                partCategory: params.get('partCategory'),
+                item: params.get('item'),
+                itemName: params.get('itemName'),
+                partName: params.get('partName'),
+                part_name: params.get('part_name'),
+                model: params.get('model'),
+                modelNo: params.get('modelNo'),
+                size: params.get('size'),
+                moc: params.get('moc'),
+                class: params.get('class'),
+                remark: params.get('remark'),
+                remarks: params.get('remarks'),
+                qty: params.get('qty'),
+                equipment: params.get('equipment'),
+                invoice: params.get('invoice'),
+                party: params.get('party'),
+                date: params.get('date')
+            };
+            if (Object.values(partPayload).some(value => value) && !partIndex) {
+                switchTab('parts');
+                prefillPartForm(partPayload);
+            }
+
+            const bomPayload = {
+                bomCategory: params.get('bomCategory'),
+                template: params.get('template'),
+                partName: params.get('partName'),
+                qty: params.get('qty'),
+                remarks: params.get('remarks')
+            };
+            if (Object.values(bomPayload).some(value => value) && !bomIndex) {
+                switchTab('bom');
+                prefillBOMForm(bomPayload);
+            }
+        }
+
+        function saveUser(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('userName').value;
+            const email = document.getElementById('userEmail').value;
+            const password = document.getElementById('userPassword').value;
+            const role = document.getElementById('userRole').value;
+            
+            const permissions = {};
+            systemPages.forEach(page => {
+                const createCb = document.querySelector(`input[data-page="${page.id}"][data-perm="create"]`);
+                const readCb = document.querySelector(`input[data-page="${page.id}"][data-perm="read"]`);
+                const updateCb = document.querySelector(`input[data-page="${page.id}"][data-perm="update"]`);
+                const deleteCb = document.querySelector(`input[data-page="${page.id}"][data-perm="delete"]`);
+                
+                if (createCb?.checked || readCb?.checked || updateCb?.checked || deleteCb?.checked) {
+                    permissions[page.id] = {
+                        create: createCb?.checked || false,
+                        read: readCb?.checked || false,
+                        update: updateCb?.checked || false,
+                        delete: deleteCb?.checked || false
+                    };
+                }
+            });
+            
+            if (editingUserId) {
+                const normalizedEditingId = String(editingUserId);
+                const index = OrbitUsers.findIndex(u => String(u.id) === normalizedEditingId);
+                if (index !== -1) {
+                    OrbitUsers[index] = { ...OrbitUsers[index], name, email, password, role, permissions };
+                }
+                showSuccess('User updated successfully!');
+                editingUserId = null;
+            } else {
+                const newId = 'U' + String(OrbitUsers.length + 1).padStart(3, '0');
+                OrbitUsers.push({ id: newId, name, email, password, role, permissions });
+                showSuccess('User created successfully!');
+            }
+            
+            localStorage.setItem('OrbitUsers', JSON.stringify(OrbitUsers));
+            document.getElementById('userFormData').reset();
+            renderPermissionsTable();
+            renderOrbitUsers();
+            updateUserStats();
+        }
+
+        function updateUserStats() {
+            const totalUsersEl = document.getElementById('totalUsersCount');
+            const totalPagesEl = document.getElementById('totalPagesCount');
+            const activeAssignmentsEl = document.getElementById('activeAssignmentsCount');
+            
+            if (!totalUsersEl) return;
+            
+            totalUsersEl.textContent = OrbitUsers.length;
+            totalPagesEl.textContent = systemPages.length;
+            
+            let totalAssignments = 0;
+            OrbitUsers.forEach(user => {
+                totalAssignments += Object.keys(user.permissions || {}).length;
+            });
+            activeAssignmentsEl.textContent = totalAssignments;
+        }
+
+        // Load users when pages tab is opened
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPermissionsTable();
+            loadOrbitUsers();
+            handleQueryParams();
+            showPartDynamicInputs('valve'); // Initialize Part Configuration with valve inputs
+            showBOMDynamicInputs('valve'); // Initialize BOM with valve inputs
+            // Load master data
+            loadMasterData();
+        });
+
+        // ==================== MASTER DATA FUNCTIONS ====================
+        let endConnectionCounter = 1;
+        let sizeCounter = 1;
+        let classCounter = 1;
+
+        function loadMasterData() {
+            const masterData = JSON.parse(localStorage.getItem('masterData') || '{}');
+            
+            // Load End Connections
+            const endConnections = masterData.endConnections || [];
+            endConnectionCounter = 1;
+            document.getElementById('endConnectionsList').innerHTML = '';
+            if (endConnections.length === 0) {
+                addEndConnectionRow();
+            } else {
+                endConnections.forEach(conn => {
+                    addEndConnectionRow(conn);
+                });
+            }
+            
+            // Load Sizes
+            const sizes = masterData.sizes || [];
+            sizeCounter = 1;
+            document.getElementById('sizesList').innerHTML = '';
+            if (sizes.length === 0) {
+                addSizeRow();
+            } else {
+                sizes.forEach(size => {
+                    addSizeRow(size);
+                });
+            }
+            
+            // Load Classes
+            const classes = masterData.classes || [];
+            classCounter = 1;
+            document.getElementById('classesList').innerHTML = '';
+            if (classes.length === 0) {
+                addClassRow();
+            } else {
+                classes.forEach(cls => {
+                    addClassRow(cls);
+                });
+            }
+        }
+
+        function addEndConnectionRow(value = '') {
+            const id = endConnectionCounter++;
+            const container = document.getElementById('endConnectionsList');
+            const row = document.createElement('div');
+            row.id = `endConn${id}`;
+            row.className = 'flex gap-2 items-center';
+            row.innerHTML = `
+                <input type="text" id="endConnInput${id}" value="${value}" placeholder="e.g., Flanged, Threaded, Welded" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <button type="button" onclick="removeEndConnectionRow(${id})" class="px-3 py-2 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600 transition-all">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeEndConnectionRow(id) {
+            const row = document.getElementById(`endConn${id}`);
+            if (row) row.remove();
+        }
+
+        function addSizeRow(value = '') {
+            const id = sizeCounter++;
+            const container = document.getElementById('sizesList');
+            const row = document.createElement('div');
+            row.id = `size${id}`;
+            row.className = 'flex gap-2 items-center';
+            row.innerHTML = `
+                <input type="text" id="sizeInput${id}" value="${value}" placeholder="e.g., 1\", 2\", 4\", DN50, DN100" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <button type="button" onclick="removeSizeRow(${id})" class="px-3 py-2 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600 transition-all">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeSizeRow(id) {
+            const row = document.getElementById(`size${id}`);
+            if (row) row.remove();
+        }
+
+        function addClassRow(value = '') {
+            const id = classCounter++;
+            const container = document.getElementById('classesList');
+            const row = document.createElement('div');
+            row.id = `class${id}`;
+            row.className = 'flex gap-2 items-center';
+            row.innerHTML = `
+                <input type="text" id="classInput${id}" value="${value}" placeholder="e.g., 150#, 300#, 600#, PN16, PN25" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <button type="button" onclick="removeClassRow(${id})" class="px-3 py-2 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600 transition-all">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeClassRow(id) {
+            const row = document.getElementById(`class${id}`);
+            if (row) row.remove();
+        }
+
+        function saveMasterData() {
+            // Collect End Connections
+            const endConnections = [];
+            for (let i = 1; i < endConnectionCounter; i++) {
+                const input = document.getElementById(`endConnInput${i}`);
+                if (input && input.value.trim()) {
+                    endConnections.push(input.value.trim());
+                }
+            }
+            
+            // Collect Sizes
+            const sizes = [];
+            for (let i = 1; i < sizeCounter; i++) {
+                const input = document.getElementById(`sizeInput${i}`);
+                if (input && input.value.trim()) {
+                    sizes.push(input.value.trim());
+                }
+            }
+            
+            // Collect Classes
+            const classes = [];
+            for (let i = 1; i < classCounter; i++) {
+                const input = document.getElementById(`classInput${i}`);
+                if (input && input.value.trim()) {
+                    classes.push(input.value.trim());
+                }
+            }
+            
+            const masterData = {
+                endConnections,
+                sizes,
+                classes
+            };
+            
+            localStorage.setItem('masterData', JSON.stringify(masterData));
+            showSuccess('Master Data saved successfully!');
+            
+            console.log('Saved Master Data:', masterData);
+        }
+    </script>
+    <script src="assets/lang.js"></script>
+</body>
+</html>

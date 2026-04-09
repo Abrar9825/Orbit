@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Orbit</title>
+    <!-- Inline favicon to prevent 404 requests for /favicon.ico -->
+    <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23004040'/%3E%3Ctext x='50' y='60' font-size='60' text-anchor='middle' fill='white' font-family='Inter, Arial' font-weight='700'%3EF%3C/text%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Allow scrolling on mobile and desktop; prevent horizontal overflow */
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        :root { --primary: #022758; --primary-light: #1A3A5C; --primary-dark: #0F1A2E; --secondary: #E8F1F8; --tertiary: #95B3CC; }
+        
+        .dashboard-card {
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .dashboard-card:active {
+            transform: none;
+        }
+
+        .dashboard-card::before {
+            display: none;
+        }
+
+        .icon-container {
+            position: relative;
+            animation: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .dashboard-card:hover .icon-container {
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInFromTop {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-fadeIn {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        .animate-slideIn {
+            animation: slideInFromTop 0.8s ease-out forwards;
+        }
+        
+        .card-1 { animation-delay: 0.1s; }
+        .card-2 { animation-delay: 0.2s; }
+        .card-3 { animation-delay: 0.3s; }
+        .card-4 { animation-delay: 0.4s; }
+        .card-5 { animation-delay: 0.5s; }
+        .card-6 { animation-delay: 0.6s; }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Enhanced Mobile Responsiveness */
+        @media (max-width: 640px) {
+            .px-3 { padding-left: 0.5rem; padding-right: 0.5rem; }
+            .py-4 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+            .gap-4 { gap: 0.75rem; }
+            .gap-6 { gap: 1rem; }
+            .mb-4 { margin-bottom: 0.75rem; }
+            .mb-6 { margin-bottom: 1rem; }
+            
+            /* Ensure grid collapses to single column on mobile */
+            .grid { display: grid; grid-template-columns: 1fr; }
+            
+            /* Make text smaller on mobile */
+            .text-base { font-size: 0.875rem; }
+            .text-lg { font-size: 1rem; }
+            .text-xl { font-size: 1.125rem; }
+            .text-2xl { font-size: 1.25rem; }
+            .text-3xl { font-size: 1.5rem; }
+            .text-4xl { font-size: 1.75rem; }
+            
+            /* Dashboard card padding */
+            .dashboard-card {
+                padding: 1rem !important;
+            }
+            
+            /* Improve button touch targets */
+            button, a {
+                min-height: 2.5rem;
+                font-size: 0.875rem;
+            }
+            
+            /* Stat number scaling */
+            .stat-number {
+                font-size: 1.75rem;
+            }
+            
+            /* Adjust dashboard card hover on mobile */
+            .dashboard-card:hover {
+                transform: translateY(-6px) scale(1.01);
+            }
+        }
+        
+        @media (max-width: 1024px) {
+            .lg\:grid-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+
+    <!-- Main Content -->
+    <nav class="sticky top-0 z-20 text-white" style="background:var(--primary);">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center font-black" style="color:var(--primary);">F</div>
+                    <div class="font-bold text-lg text-white">Orbit</div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="text-sm text-white/90 hidden sm:block">Hello, Admin</div>
+                    <button onclick="window.location.href='index.html'" class="w-10 h-10 rounded-full bg-white flex items-center justify-center font-semibold shadow hover:scale-105 transition-transform" title="Sign out" style="color:var(--primary);">
+                        A
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10">
+
+        <!-- Header -->
+        <div class="text-center mb-10 sm:mb-12">
+            <div class="mb-4">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl shadow-2xl mb-3" style="background: linear-gradient(135deg, var(--primary), var(--primary-light));">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+                    </svg>
+                </div>
+            </div>
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 mb-2 tracking-tight">
+                Welcome to <span style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Orbit</span>
+            </h1>
+            <p class="text-base sm:text-lg text-gray-600 font-medium">Manufacturing Execution System</p>
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            <!-- Configuration Card -->
+            <div class="dashboard-card card-1" onclick="window.location.href='10.1_configuration_view.html'">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 transition-colors h-full" style="border-color: var(--primary);">
+                    <div class="p-4 text-center relative overflow-hidden" style="background: linear-gradient(135deg, var(--primary-dark), var(--primary), var(--primary-light));">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-white opacity-5 rounded-full -mr-12 -mt-12"></div>
+                        <div class="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-10 -mb-10"></div>
+                        <div class="icon-container w-16 h-16 bg-white bg-opacity-15 rounded-2xl mx-auto mb-1 flex items-center justify-center backdrop-blur-sm shadow-lg relative z-10">
+                            <i class="fas fa-cogs text-3xl text-white"></i>
+                        </div>
+                        <h3 class="text-2xl font-black text-white mb-1 relative z-10">Configuration</h3>
+                        <p class="text-xs font-medium relative z-10" style="color: rgba(255,255,255,0.8);">System Setup</p>
+                    </div>
+                    <div class="p-4" style="background: linear-gradient(135deg, rgba(2,39,88,0.1), white);">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700 font-semibold text-xs">View</span>
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center" style="background-color: rgba(2,39,88,0.2);">
+                                <i class="fas fa-arrow-right text-xs" style="color: var(--primary);"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stock Card -->
+            <div class="dashboard-card card-2" onclick="window.location.href='07_stock_management.html'">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 transition-colors h-full" style="border-color: var(--primary);">
+                    <div class="p-4 text-center relative overflow-hidden" style="background: linear-gradient(135deg, var(--primary-dark), var(--primary), var(--primary-light));">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-white opacity-5 rounded-full -mr-12 -mt-12"></div>
+                        <div class="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-10 -mb-10"></div>
+                        <div class="icon-container w-16 h-16 bg-white bg-opacity-15 rounded-2xl mx-auto mb-1 flex items-center justify-center backdrop-blur-sm shadow-lg relative z-10">
+                            <i class="fas fa-boxes text-3xl text-white"></i>
+                        </div>
+                        <h3 class="text-2xl font-black text-white mb-1 relative z-10">Stock</h3>
+                        <p class="text-xs font-medium relative z-10" style="color: rgba(255,255,255,0.8);">Inventory</p>
+                    </div>
+                    <div class="p-4" style="background: linear-gradient(135deg, rgba(2,39,88,0.1), white);">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700 font-semibold text-xs">View</span>
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center" style="background-color: rgba(2,39,88,0.2);">
+                                <i class="fas fa-arrow-right text-xs" style="color: var(--primary);"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Card -->
+            <div class="dashboard-card card-3" onclick="window.location.href='01_dashboard.html'">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 transition-colors h-full" style="border-color: var(--primary);">
+                    <div class="p-4 text-center relative overflow-hidden" style="background: linear-gradient(135deg, var(--primary-dark), var(--primary), var(--primary-light));">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-white opacity-5 rounded-full -mr-12 -mt-12"></div>
+                        <div class="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-10 -mb-10"></div>
+                        <div class="icon-container w-16 h-16 bg-white bg-opacity-15 rounded-2xl mx-auto mb-1 flex items-center justify-center backdrop-blur-sm shadow-lg relative z-10">
+                            <i class="fas fa-shopping-cart text-3xl text-white"></i>
+                        </div>
+                        <h3 class="text-2xl font-black text-white mb-1 relative z-10">Orders</h3>
+                        <p class="text-slate-200 text-xs font-medium relative z-10">Manage all orders</p>
+                    </div>
+                    <div class="p-4" style="background: linear-gradient(135deg, rgba(2,39,88,0.1), white);">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700 font-semibold text-xs">View</span>
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center" style="background-color: rgba(2,39,88,0.2);">
+                                <i class="fas fa-arrow-right text-xs" style="color: var(--primary);"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expense Card -->
+            <div class="dashboard-card card-4" onclick="window.location.href='09_expense_management.html'">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 transition-colors h-full" style="border-color: var(--primary);">
+                    <div class="p-4 text-center relative overflow-hidden" style="background: linear-gradient(135deg, var(--primary-dark), var(--primary), var(--primary-light));">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-white opacity-5 rounded-full -mr-12 -mt-12"></div>
+                        <div class="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-10 -mb-10"></div>
+                        <div class="icon-container w-16 h-16 bg-white bg-opacity-15 rounded-2xl mx-auto mb-1 flex items-center justify-center backdrop-blur-sm shadow-lg relative z-10">
+                            <i class="fas fa-wallet text-3xl text-white"></i>
+                        </div>
+                        <h3 class="text-2xl font-black text-white mb-1 relative z-10">Expense</h3>
+                        <p class="text-xs font-medium relative z-10" style="color: rgba(255,255,255,0.8);">Track expenses</p>
+                    </div>
+                    <div class="p-4" style="background: linear-gradient(135deg, rgba(2,39,88,0.1), white);">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700 font-semibold text-xs">View</span>
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center" style="background-color: rgba(2,39,88,0.2);">
+                                <i class="fas fa-arrow-right text-xs" style="color: var(--primary);"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workers Card -->
+            <div class="dashboard-card card-5" onclick="window.location.href='06_worker_management_new.html'">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 transition-colors h-full" style="border-color: var(--primary);">
+                    <div class="p-4 text-center relative overflow-hidden" style="background: linear-gradient(135deg, var(--primary-dark), var(--primary), var(--primary-light));">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-white opacity-5 rounded-full -mr-12 -mt-12"></div>
+                        <div class="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-10 -mb-10"></div>
+                        <div class="icon-container w-16 h-16 bg-white bg-opacity-15 rounded-2xl mx-auto mb-1 flex items-center justify-center backdrop-blur-sm shadow-lg relative z-10">
+                            <i class="fas fa-user-check text-3xl text-white"></i>
+                        </div>
+                        <h3 class="text-2xl font-black text-white mb-1 relative z-10">Workers</h3>
+                        <p class="text-xs font-medium relative z-10" style="color: rgba(255,255,255,0.8);">Attendance</p>
+                    </div>
+                    <div class="p-4" style="background: linear-gradient(135deg, rgba(2,39,88,0.1), white);">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700 font-semibold text-xs">View</span>
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center" style="background-color: rgba(2,39,88,0.2);">
+                                <i class="fas fa-arrow-right text-xs" style="color: var(--primary);"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Challan Card -->
+            <div class="dashboard-card card-6" onclick="window.location.href='11_challan_list.html'">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 transition-colors h-full" style="border-color: var(--primary);">
+                    <div class="p-4 text-center relative overflow-hidden" style="background: linear-gradient(135deg, var(--primary-dark), var(--primary), var(--primary-light));">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-white opacity-5 rounded-full -mr-12 -mt-12"></div>
+                        <div class="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-10 -mb-10"></div>
+                        <div class="icon-container w-16 h-16 bg-white bg-opacity-15 rounded-2xl mx-auto mb-1 flex items-center justify-center backdrop-blur-sm shadow-lg relative z-10">
+                            <i class="fas fa-file-invoice text-3xl text-white"></i>
+                        </div>
+                        <h3 class="text-2xl font-black text-white mb-1 relative z-10">Challan</h3>
+                        <p class="text-xs font-medium relative z-10" style="color: rgba(255,255,255,0.8);">Outsource</p>
+                    </div>
+                    <div class="p-4" style="background: linear-gradient(135deg, rgba(2,39,88,0.1), white);">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700 font-semibold text-xs">View</span>
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center" style="background-color: rgba(2,39,88,0.2);">
+                                <i class="fas fa-arrow-right text-xs" style="color: var(--primary);"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const timeElement = document.getElementById('currentTime');
+            if(timeElement) timeElement.textContent = timeString;
+        }
+        updateTime();
+        setInterval(updateTime, 60000);
+    </script>
+    <script src="assets/lang.js"></script>
+</body>
+</html>
