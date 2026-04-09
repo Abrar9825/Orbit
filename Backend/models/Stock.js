@@ -142,6 +142,21 @@ const stockSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    plan: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    available: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    committed: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
     movements: [movementSchema],
     isActive: {
       type: Boolean,

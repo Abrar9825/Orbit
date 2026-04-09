@@ -16,7 +16,7 @@ const router = express.Router();
 // All routes require authentication
 router.use(authMiddleware);
 
-// Create stock (supports openingQty) - requires canCreate permission
+// Create stock (supports openingQty, plan, available, committed) - requires canCreate permission
 router.post(
   '/',
   permissionMiddleware('Stock Management', 'canCreate'),
@@ -44,7 +44,7 @@ router.get(
   getStockById
 );
 
-// Update stock settings (supports openingQty) - requires canEdit permission
+// Update stock settings (supports openingQty, plan, available, committed) - requires canEdit permission
 router.put(
   '/:id',
   permissionMiddleware('Stock Management', 'canEdit'),

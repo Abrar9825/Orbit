@@ -25,6 +25,19 @@ function parseOptionalDate(value) {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 }
 
+function parseNonNegativeNumber(value, fallback = 0) {
+  if (value === undefined || value === null || value === '') {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.max(parsed, 0);
+}
+
 async function createStock(req, res) {
   try {
     const {
@@ -35,6 +48,9 @@ async function createStock(req, res) {
       qtyOnHand,
       minStockLevel,
       reorderQty,
+      plan,
+      available,
+      committed,
       unit,
       lastPurchasePrice,
       remarks,
@@ -97,14 +113,18 @@ async function createStock(req, res) {
       };
     }
 
-    const parsedQtyOnHand = qtyOnHand === undefined
-      ? Number(openingQty || 0)
-      : Number(qtyOnHand);
+    const safeQtyOnHand = qtyOnHand === undefined
+      ? parseNonNegativeNumber(openingQty, 0)
+      : parseNonNegativeNumber(qtyOnHand, 0);
 
-    const safeQtyOnHand = Math.max(parsedQtyOnHand, 0);
     const safeOpeningQty = openingQty === undefined
       ? safeQtyOnHand
-      : Math.max(Number(openingQty), 0);
+      : parseNonNegativeNumber(openingQty, 0);
+    const safeCommitted = Math.min(parseNonNegativeNumber(committed, 0), safeQtyOnHand);
+    const safeAvailable = available === undefined
+      ? Math.max(safeQtyOnHand - safeCommitted, 0)
+      : Math.min(parseNonNegativeNumber(available, 0), safeQtyOnHand);
+    const safePlan = parseNonNegativeNumber(plan, 0);
 
     const openingMovements = [];
     if (safeOpeningQty > 0) {
@@ -122,8 +142,11 @@ async function createStock(req, res) {
       ...stockData,
       openingQty: safeOpeningQty,
       qtyOnHand: safeQtyOnHand,
-      minStockLevel: Math.max(Number(minStockLevel || 0), 0),
-      reorderQty: Math.max(Number(reorderQty || 0), 0),
+      minStockLevel: parseNonNegativeNumber(minStockLevel, 0),
+      reorderQty: parseNonNegativeNumber(reorderQty, 0),
+      plan: safePlan,
+      available: safeAvailable,
+      committed: safeCommitted,
       unit: unit || stockData.unit || 'NOS',
       lastPurchasePrice: lastPurchasePrice === undefined ? undefined : Number(lastPurchasePrice),
       remarks: cleanText(remarks),
@@ -232,6 +255,9 @@ async function updateStock(req, res) {
       openingQty,
       minStockLevel,
       reorderQty,
+      plan,
+      available,
+      committed,
       unit,
       lastPurchasePrice,
       remarks,
@@ -249,7 +275,7 @@ async function updateStock(req, res) {
     }
 
     if (openingQty !== undefined) {
-      const nextOpeningQty = Math.max(Number(openingQty), 0);
+      const nextOpeningQty = parseNonNegativeNumber(openingQty, 0);
       if (nextOpeningQty !== stock.openingQty) {
         stock.movements.push({
           movementType: 'ADJUST',
@@ -262,8 +288,17 @@ async function updateStock(req, res) {
       }
       stock.openingQty = nextOpeningQty;
     }
-    if (minStockLevel !== undefined) stock.minStockLevel = Math.max(Number(minStockLevel), 0);
-    if (reorderQty !== undefined) stock.reorderQty = Math.max(Number(reorderQty), 0);
+    if (minStockLevel !== undefined) stock.minStockLevel = parseNonNegativeNumber(minStockLevel, stock.minStockLevel);
+    if (reorderQty !== undefined) stock.reorderQty = parseNonNegativeNumber(reorderQty, stock.reorderQty);
+    if (plan !== undefined) stock.plan = parseNonNegativeNumber(plan, stock.plan);
+    if (committed !== undefined) {
+      stock.committed = Math.min(parseNonNegativeNumber(committed, stock.committed), stock.qtyOnHand || 0);
+    }
+    if (available !== undefined) {
+      stock.available = Math.min(parseNonNegativeNumber(available, stock.available), stock.qtyOnHand || 0);
+    } else if (committed !== undefined) {
+      stock.available = Math.max((stock.qtyOnHand || 0) - (stock.committed || 0), 0);
+    }
     if (unit !== undefined) stock.unit = unit;
     if (lastPurchasePrice !== undefined) stock.lastPurchasePrice = Number(lastPurchasePrice);
     if (remarks !== undefined) stock.remarks = cleanText(remarks);
@@ -322,6 +357,8 @@ async function addStockMovement(req, res) {
     }
 
     stock.qtyOnHand = nextQty;
+    stock.committed = Math.min(stock.committed || 0, stock.qtyOnHand);
+    stock.available = Math.max(stock.qtyOnHand - (stock.committed || 0), 0);
     stock.movements.push({
       movementType,
       quantity: qty,
@@ -354,7 +391,7 @@ async function getReorderSuggestions(req, res) {
 
     const suggestions = stockItems
       .map((item) => {
-        const shortage = Math.max((item.minStockLevel || 0) - (item.qtyOnHand || 0), 0);
+        const shortage = Math.max((item.minStockLevel || 0) - (item.available || 0), 0);
         const suggestedOrderQty = Math.max(shortage, item.reorderQty || 0);
 
         return {
@@ -365,6 +402,9 @@ async function getReorderSuggestions(req, res) {
           bomId: item.bomId,
           openingQty: item.openingQty,
           qtyOnHand: item.qtyOnHand,
+          plan: item.plan,
+          available: item.available,
+          committed: item.committed,
           minStockLevel: item.minStockLevel,
           reorderQty: item.reorderQty,
           shortage,
