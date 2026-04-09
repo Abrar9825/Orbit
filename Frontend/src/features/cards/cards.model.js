@@ -12,7 +12,7 @@ export const DASHBOARD_CARDS = [
     title: 'Stock',
     subtitle: 'Inventory',
     iconClass: 'fas fa-boxes',
-    target: '07_stock_management.html',
+    target: '/stock',
     animationClass: 'card-2'
   },
   {

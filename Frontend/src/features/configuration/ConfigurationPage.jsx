@@ -1,5 +1,4 @@
 import useConfigurationController from './useConfigurationController';
-import './configuration.css';
 
 function SuccessToast({ message }) {
   if (!message) {
@@ -16,7 +15,7 @@ function SuccessToast({ message }) {
 
 function TopHeader({ onBack, onDashboard }) {
   return (
-    <div className="primary-gradient">
+    <div className="bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white">
       <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
         <div className="flex items-center gap-2">
           <button
@@ -53,7 +52,11 @@ function Tabs({ activeTab, onSwitch }) {
           <button
             key={tab.id}
             onClick={() => onSwitch(tab.id)}
-            className={`tab-item whitespace-nowrap ${activeTab === tab.id ? 'active' : ''}`}
+            className={`inline-flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium whitespace-nowrap transition-all ${
+              activeTab === tab.id
+                ? 'border-[#022758] text-[#022758]'
+                : 'border-transparent text-gray-500 hover:bg-emerald-50 hover:text-[#022758]'
+            }`}
           >
             <i className={tab.icon}></i>
             <span className="hidden sm:inline">{tab.desktop}</span>
@@ -78,9 +81,9 @@ function MachinesSection({
   isEditMode
 }) {
   return (
-    <div className="content-section p-2 sm:p-3">
-      <div className="config-card">
-        <div className="section-title text-sm" style={{ color: 'var(--primary)' }}>
+    <div className="p-2 sm:p-3">
+      <div className="mx-auto max-w-[900px] rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#022758]">
           <i className="fas fa-cogs text-sm"></i>
           Machine Configuration
         </div>
@@ -165,7 +168,7 @@ function MachinesSection({
           <button
             type="button"
             onClick={onSubmit}
-            className="inline-flex items-center gap-2 px-4 py-1.5 primary-btn rounded-lg text-sm font-medium"
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#022758] to-[#1a3a5c] px-4 py-1.5 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,64,64,0.2)] transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(0,64,64,0.3)]"
           >
             <i className="fas fa-save"></i> {isEditMode ? 'Update Machine' : 'Add Machine'}
           </button>
@@ -186,9 +189,9 @@ function PartsSection({ selectedPartCategory, partState, onFieldChange, onSubmit
   const isValve = selectedPartCategory === 'valve';
 
   return (
-    <div className="content-section p-2 sm:p-3">
-      <div className="config-card">
-        <div className="section-title text-sm" style={{ color: 'var(--primary)' }}>
+    <div className="p-2 sm:p-3">
+      <div className="mx-auto max-w-[900px] rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#022758]">
           <i className="fas fa-puzzle-piece text-sm"></i>
           Part Configuration
         </div>
@@ -368,7 +371,7 @@ function PartsSection({ selectedPartCategory, partState, onFieldChange, onSubmit
           <button
             type="button"
             onClick={onSubmit}
-            className="inline-flex items-center gap-2 px-4 py-1.5 primary-btn rounded-lg text-sm font-medium"
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#022758] to-[#1a3a5c] px-4 py-1.5 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,64,64,0.2)] transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(0,64,64,0.3)]"
           >
             <i className="fas fa-save"></i> {isEditMode ? 'Update Part' : 'Add Part'}
           </button>
@@ -400,9 +403,9 @@ function BomSection({
   const isValve = selectedBomType === 'valve';
 
   return (
-    <div className="content-section p-2 sm:p-3">
-      <div className="config-card">
-        <div className="section-title text-sm" style={{ color: 'var(--primary)' }}>
+    <div className="p-2 sm:p-3">
+      <div className="mx-auto max-w-[900px] rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#022758]">
           <i className="fas fa-list-alt text-sm"></i>
           BOM Template
         </div>
@@ -622,7 +625,7 @@ function BomSection({
           <button
             type="button"
             onClick={onAddPart}
-            className="inline-flex items-center gap-2 px-4 py-2 primary-btn rounded-lg text-sm font-medium"
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#022758] to-[#1a3a5c] px-4 py-2 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,64,64,0.2)] transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(0,64,64,0.3)]"
           >
             <i className="fas fa-plus"></i> Add Part
           </button>
@@ -632,7 +635,7 @@ function BomSection({
           <button
             type="button"
             onClick={onSubmit}
-            className="inline-flex items-center gap-2 px-4 py-1.5 primary-btn rounded-lg text-sm font-medium"
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#022758] to-[#1a3a5c] px-4 py-1.5 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,64,64,0.2)] transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(0,64,64,0.3)]"
           >
             <i className="fas fa-save"></i> {isEditMode ? 'Update BOM Template' : 'Save BOM Template'}
           </button>
@@ -661,7 +664,7 @@ function UsersSection({
   isEditMode
 }) {
   return (
-    <div className="content-section p-2 sm:p-3">
+    <div className="p-2 sm:p-3">
       <div className="bg-white rounded-lg border border-gray-200 p-3">
         <div className="flex items-center gap-2 mb-3">
           <i className="fas fa-users-cog text-sm" style={{ color: 'var(--primary)' }}></i>
@@ -842,9 +845,9 @@ function MasterDataSection({ rows, onAdd, onRemove, onChange, onSave }) {
   ];
 
   return (
-    <div className="content-section p-2 sm:p-3">
-      <div className="config-card">
-        <div className="section-title">
+    <div className="p-2 sm:p-3">
+      <div className="mx-auto max-w-[900px] rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#022758]">
           <i className="fas fa-database"></i>
           Master Data Management
         </div>
@@ -892,7 +895,7 @@ function MasterDataSection({ rows, onAdd, onRemove, onChange, onSave }) {
           <button
             type="button"
             onClick={onSave}
-            className="primary-btn px-6 py-2 rounded-lg text-sm font-semibold"
+            className="rounded-lg bg-gradient-to-r from-[#022758] to-[#1a3a5c] px-6 py-2 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(0,64,64,0.2)] transition-all hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(0,64,64,0.3)]"
           >
             <i className="fas fa-save"></i> Save All Master Data
           </button>
@@ -979,7 +982,7 @@ export default function ConfigurationPage() {
   const controller = useConfigurationController();
 
   return (
-    <div className="configuration-page bg-gray-50 min-h-screen font-sans text-gray-800">
+    <div className="min-h-screen overflow-x-hidden overflow-y-auto bg-gray-50 font-sans text-gray-800">
       <SuccessToast message={controller.successMessage} />
 
       <TopHeader onBack={controller.goToViewPage} onDashboard={controller.goToDashboard} />

@@ -1,5 +1,4 @@
 import useConfigurationViewController from './useConfigurationViewController';
-import './configurationView.css';
 
 function PaginationControls({ tab, meta, currentPage, onPrev, onNext, onPage }) {
   const maxButtons = 5;
@@ -22,20 +21,20 @@ function PaginationControls({ tab, meta, currentPage, onPrev, onNext, onPage }) 
           Showing <span className="font-semibold text-slate-900">{meta.totalItems === 0 ? '0-0' : `${meta.startLabel}-${meta.endIndex}`}</span> of{' '}
           <span className="font-semibold text-slate-900">{meta.totalItems}</span>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 pagination-controls">
+        <div className="flex items-center gap-1.5 sm:gap-2 relative w-full justify-center">
           <button
             onClick={onPrev}
             disabled={currentPage === 1}
-            className={`prev-btn px-2.5 sm:px-3 py-1.5 border-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`sm:absolute sm:left-0 px-2.5 sm:px-3 py-1.5 border-2 rounded-lg text-xs font-semibold transition-all ${
               currentPage === 1
                 ? 'bg-slate-50 border-slate-200 text-slate-400'
-                : 'btn-view'
+                : 'bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:brightness-110'
             }`}
           >
             Previous
           </button>
 
-          <div className="page-buttons flex items-center gap-1.5 sm:gap-2 px-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 px-2">
             {startPage > 1 ? (
               <>
                 <button
@@ -56,7 +55,7 @@ function PaginationControls({ tab, meta, currentPage, onPrev, onNext, onPage }) 
                   onClick={() => onPage(page)}
                   className={
                     page === currentPage
-                      ? 'px-2.5 sm:px-3 py-1.5 btn-view rounded-lg text-xs font-bold'
+                      ? 'px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:brightness-110 rounded-lg text-xs font-bold'
                       : 'px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-100'
                   }
                 >
@@ -81,10 +80,10 @@ function PaginationControls({ tab, meta, currentPage, onPrev, onNext, onPage }) 
           <button
             onClick={onNext}
             disabled={currentPage === meta.totalPages}
-            className={`next-btn px-2.5 sm:px-3 py-1.5 border-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`sm:absolute sm:right-0 px-2.5 sm:px-3 py-1.5 border-2 rounded-lg text-xs font-semibold transition-all ${
               currentPage === meta.totalPages
                 ? 'bg-slate-50 border-slate-200 text-slate-400'
-                : 'btn-view'
+                : 'bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:brightness-110'
             }`}
           >
             Next
@@ -134,7 +133,7 @@ function StatsCards({ counts, onSwitchTab }) {
         <button
           key={card.key}
           onClick={() => onSwitchTab(card.key)}
-          className="primary-gradient rounded-lg text-white shadow-lg p-4 text-left transition-all hover:shadow-2xl hover:scale-105"
+          className="bg-gradient-to-r from-[#022758] to-[#1a3a5c] rounded-lg text-white shadow-lg p-4 text-left transition-all hover:shadow-2xl hover:scale-105"
         >
           <div className="flex items-center justify-between mb-2">
             <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white">
@@ -175,8 +174,10 @@ function FiltersBar({
           <button
             key={tab.id}
             onClick={() => onSwitchTab(tab.id)}
-            className={`tab-btn px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
-              activeTab === tab.id ? 'active primary-gradient text-white' : 'text-slate-600 hover:bg-slate-100'
+            className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+              activeTab === tab.id
+                ? 'bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)]'
+                : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
             <i className={`${tab.icon} mr-1 sm:mr-2`}></i>
@@ -230,7 +231,7 @@ function FiltersBar({
 
         <button
           onClick={onAddNew}
-          className="primary-btn px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all w-full sm:w-auto"
+          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#022758] to-[#1a3a5c] px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition-all hover:-translate-y-px hover:brightness-110"
         >
           <i className="fas fa-plus"></i>
           <span>Add New</span>
@@ -243,9 +244,9 @@ function FiltersBar({
 function MachinesTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onEdit, onDelete }) {
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto table-view">
+      <div className="overflow-x-auto hidden md:block">
         <table className="w-full text-sm">
-          <thead className="table-header text-white text-xs uppercase">
+          <thead className="bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white text-xs uppercase">
             <tr>
               <th className="px-4 py-3 text-left">Process Type</th>
               <th className="px-4 py-3 text-left">Machine Name</th>
@@ -297,7 +298,7 @@ function MachinesTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onE
         </table>
       </div>
 
-      <div className="card-view p-3">
+      <div className="block md:hidden p-3">
         {pageItems.length === 0 ? (
           <div className="text-center py-8 text-slate-500">
             <i className="fas fa-cogs text-4xl mb-2 text-slate-300"></i>
@@ -307,22 +308,22 @@ function MachinesTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onE
           pageItems.map((machine, index) => {
             const globalIndex = meta.startIndex + index;
             return (
-              <div key={`machine-card-${globalIndex}`} className="mobile-card">
-                <div className="mobile-card-header">
+              <div key={`machine-card-${globalIndex}`} className="mb-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm active:scale-[0.98] active:shadow-md">
+                <div className="mb-3 border-b-2 border-slate-200 pb-2 text-[0.95rem] font-semibold text-[#022758]">
                   <i className="fas fa-cog mr-2"></i>
                   {machine.name}
                 </div>
-                <div className="mobile-card-row">
-                  <span className="mobile-card-label">Process:</span>
-                  <span className="mobile-card-value">{machine.process || 'N/A'}</span>
+                <div className="flex items-center justify-between py-1.5 text-[0.85rem]">
+                  <span className="font-medium text-slate-500">Process:</span>
+                  <span className="text-right font-medium text-slate-800">{machine.process || 'N/A'}</span>
                 </div>
-                <div className="mobile-card-row">
-                  <span className="mobile-card-label">Code:</span>
-                  <span className="mobile-card-value">{machine.code || 'N/A'}</span>
+                <div className="flex items-center justify-between py-1.5 text-[0.85rem]">
+                  <span className="font-medium text-slate-500">Code:</span>
+                  <span className="text-right font-medium text-slate-800">{machine.code || 'N/A'}</span>
                 </div>
-                <div className="mobile-card-row">
-                  <span className="mobile-card-label">Size:</span>
-                  <span className="mobile-card-value">{machine.size || 'N/A'}</span>
+                <div className="flex items-center justify-between py-1.5 text-[0.85rem]">
+                  <span className="font-medium text-slate-500">Size:</span>
+                  <span className="text-right font-medium text-slate-800">{machine.size || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200">
                   <button
@@ -359,9 +360,9 @@ function MachinesTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onE
 function PartsTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onEdit, onDelete }) {
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto table-view">
+      <div className="overflow-x-auto hidden md:block">
         <table className="w-full text-sm">
-          <thead className="table-header text-white">
+          <thead className="bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white">
             <tr>
               <th className="px-4 py-3 text-left font-semibold">ITEM NAME</th>
               <th className="px-4 py-3 text-left font-semibold">MODEL NO</th>
@@ -413,7 +414,7 @@ function PartsTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onEdit
         </table>
       </div>
 
-      <div className="card-view p-3">
+      <div className="block md:hidden p-3">
         {pageItems.length === 0 ? (
           <div className="text-center py-8 text-slate-500">
             <i className="fas fa-cube text-4xl mb-2 text-slate-300"></i>
@@ -421,30 +422,30 @@ function PartsTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onEdit
           </div>
         ) : (
           pageItems.map((part, index) => (
-            <div key={`part-card-${meta.startIndex + index}`} className="mobile-card">
-              <div className="mobile-card-header">
+            <div key={`part-card-${meta.startIndex + index}`} className="mb-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm active:scale-[0.98] active:shadow-md">
+              <div className="mb-3 border-b-2 border-slate-200 pb-2 text-[0.95rem] font-semibold text-[#022758]">
                 <i className="fas fa-cube mr-2"></i>
                 {part.itemName || part.item || part.part_name || 'N/A'}
               </div>
-              <div className="mobile-card-row">
-                <span className="mobile-card-label">Model No:</span>
-                <span className="mobile-card-value">{part.modelNo || part.model || part.equipment || '-'}</span>
+              <div className="flex items-center justify-between py-1.5 text-[0.85rem]">
+                <span className="font-medium text-slate-500">Model No:</span>
+                <span className="text-right font-medium text-slate-800">{part.modelNo || part.model || part.equipment || '-'}</span>
               </div>
-              <div className="mobile-card-row">
-                <span className="mobile-card-label">Size:</span>
-                <span className="mobile-card-value">{part.size || part.qty || '-'}</span>
+              <div className="flex items-center justify-between py-1.5 text-[0.85rem]">
+                <span className="font-medium text-slate-500">Size:</span>
+                <span className="text-right font-medium text-slate-800">{part.size || part.qty || '-'}</span>
               </div>
-              <div className="mobile-card-row">
-                <span className="mobile-card-label">MOC:</span>
-                <span className="mobile-card-value">{part.moc || '-'}</span>
+              <div className="flex items-center justify-between py-1.5 text-[0.85rem]">
+                <span className="font-medium text-slate-500">MOC:</span>
+                <span className="text-right font-medium text-slate-800">{part.moc || '-'}</span>
               </div>
-              <div className="mobile-card-row">
-                <span className="mobile-card-label">Class:</span>
-                <span className="mobile-card-value">{part.class || part.invoice || '-'}</span>
+              <div className="flex items-center justify-between py-1.5 text-[0.85rem]">
+                <span className="font-medium text-slate-500">Class:</span>
+                <span className="text-right font-medium text-slate-800">{part.class || part.invoice || '-'}</span>
               </div>
-              <div className="mobile-card-row">
-                <span className="mobile-card-label">Remark:</span>
-                <span className="mobile-card-value">{part.remark || part.remarks || '-'}</span>
+              <div className="flex items-center justify-between py-1.5 text-[0.85rem]">
+                <span className="font-medium text-slate-500">Remark:</span>
+                <span className="text-right font-medium text-slate-800">{part.remark || part.remarks || '-'}</span>
               </div>
               <div className="mt-3 pt-3 border-t border-slate-200 flex gap-2">
                 <button
@@ -480,9 +481,9 @@ function PartsTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onEdit
 function BomTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onEdit, onDelete }) {
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto table-view">
+      <div className="overflow-x-auto hidden md:block">
         <table className="w-full text-sm">
-          <thead className="table-header text-white" id="bomTableHead">
+          <thead className="bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white" id="bomTableHead">
             <tr>
               <th className="px-4 py-3 text-left font-semibold">Valve Name</th>
               <th className="px-4 py-3 text-left font-semibold">Actions</th>
@@ -523,7 +524,7 @@ function BomTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onEdit, 
         </table>
       </div>
 
-      <div className="card-view p-3">
+      <div className="block md:hidden p-3">
         {pageItems.length === 0 ? (
           <div className="text-center py-8 text-slate-500">
             <i className="fas fa-list text-4xl mb-2 text-slate-300"></i>
@@ -531,8 +532,8 @@ function BomTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onEdit, 
           </div>
         ) : (
           pageItems.map((bom, index) => (
-            <div key={`bom-card-${meta.startIndex + index}`} className="mobile-card">
-              <div className="mobile-card-header">
+            <div key={`bom-card-${meta.startIndex + index}`} className="mb-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm active:scale-[0.98] active:shadow-md">
+              <div className="mb-3 border-b-2 border-slate-200 pb-2 text-[0.95rem] font-semibold text-[#022758]">
                 <i className="fas fa-list mr-2"></i>
                 {bom.valveName || bom.partName || '-'}
               </div>
@@ -580,9 +581,9 @@ function UsersTab({
 }) {
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto table-view">
+      <div className="overflow-x-auto hidden md:block">
         <table className="w-full text-sm">
-          <thead className="table-header text-white">
+          <thead className="bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white">
             <tr>
               <th className="px-4 py-3 text-left font-semibold">User Name</th>
               <th className="px-4 py-3 text-left font-semibold">Email</th>
@@ -614,7 +615,7 @@ function UsersTab({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => onOpenUserConfig(user.id)}
-                        className="btn-view px-3 py-1 rounded-lg text-xs font-semibold"
+                        className="bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:brightness-110 px-3 py-1 rounded-lg text-xs font-semibold"
                       >
                         View
                       </button>
@@ -633,7 +634,7 @@ function UsersTab({
         </table>
       </div>
 
-      <div className="card-view p-3">
+      <div className="block md:hidden p-3">
         {pageItems.length === 0 ? (
           <div className="text-center py-8 text-slate-500">
             <i className="fas fa-users text-4xl mb-2 text-slate-300"></i>
@@ -641,27 +642,27 @@ function UsersTab({
           </div>
         ) : (
           pageItems.map((user, index) => (
-            <div key={`user-card-${meta.startIndex + index}`} className="mobile-card">
-              <div className="mobile-card-header">
+            <div key={`user-card-${meta.startIndex + index}`} className="mb-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm active:scale-[0.98] active:shadow-md">
+              <div className="mb-3 border-b-2 border-slate-200 pb-2 text-[0.95rem] font-semibold text-[#022758]">
                 <i className="fas fa-user mr-2"></i>
                 {user.name}
               </div>
-              <div className="mobile-card-row">
-                <span className="mobile-card-label">Email:</span>
-                <span className="mobile-card-value">{user.email}</span>
+              <div className="flex items-center justify-between py-1.5 text-[0.85rem]">
+                <span className="font-medium text-slate-500">Email:</span>
+                <span className="text-right font-medium text-slate-800">{user.email}</span>
               </div>
-              <div className="mobile-card-row">
-                <span className="mobile-card-label">Password:</span>
-                <span className="mobile-card-value">{user.password || 'N/A'}</span>
+              <div className="flex items-center justify-between py-1.5 text-[0.85rem]">
+                <span className="font-medium text-slate-500">Password:</span>
+                <span className="text-right font-medium text-slate-800">{user.password || 'N/A'}</span>
               </div>
-              <div className="mobile-card-row">
-                <span className="mobile-card-label">Role:</span>
-                <span className="mobile-card-value">{user.role || 'User'}</span>
+              <div className="flex items-center justify-between py-1.5 text-[0.85rem]">
+                <span className="font-medium text-slate-500">Role:</span>
+                <span className="text-right font-medium text-slate-800">{user.role || 'User'}</span>
               </div>
               <div className="mt-3 pt-3 border-t border-slate-200 flex gap-2">
                 <button
                   onClick={() => onOpenUserConfig(user.id)}
-                  className="flex-1 btn-view px-3 py-2 rounded-lg text-xs font-semibold"
+                  className="flex-1 bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:brightness-110 px-3 py-2 rounded-lg text-xs font-semibold"
                 >
                   View
                 </button>
@@ -700,9 +701,9 @@ function MasterDataTab({ pageItems, filterType, meta, currentPage, onPrev, onNex
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto table-view">
+      <div className="overflow-x-auto hidden md:block">
         <table className="w-full text-sm">
-          <thead className="table-header text-white">
+          <thead className="bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white">
             <tr>
               <th className="px-4 py-3 text-left font-semibold">#</th>
               <th className="px-4 py-3 text-left font-semibold">Value</th>
@@ -740,7 +741,7 @@ function MasterDataTab({ pageItems, filterType, meta, currentPage, onPrev, onNex
         </table>
       </div>
 
-      <div className="card-view p-3">
+      <div className="block md:hidden p-3">
         {pageItems.length === 0 ? (
           <div className="text-center py-8 text-slate-500">
             <i className="fas fa-database text-4xl mb-2 text-slate-300"></i>
@@ -750,14 +751,14 @@ function MasterDataTab({ pageItems, filterType, meta, currentPage, onPrev, onNex
           pageItems.map((item, index) => {
             const globalIndex = meta.startIndex + index;
             return (
-              <div key={`master-card-${globalIndex}`} className="mobile-card">
-                <div className="mobile-card-header">
+              <div key={`master-card-${globalIndex}`} className="mb-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm active:scale-[0.98] active:shadow-md">
+                <div className="mb-3 border-b-2 border-slate-200 pb-2 text-[0.95rem] font-semibold text-[#022758]">
                   <i className="fas fa-database mr-2"></i>
                   {titleLabel} #{globalIndex + 1}
                 </div>
-                <div className="mobile-card-row">
-                  <span className="mobile-card-label">Value:</span>
-                  <span className="mobile-card-value">{item}</span>
+                <div className="flex items-center justify-between py-1.5 text-[0.85rem]">
+                  <span className="font-medium text-slate-500">Value:</span>
+                  <span className="text-right font-medium text-slate-800">{item}</span>
                 </div>
                 <div className="mt-3 pt-3 border-t border-slate-200 flex gap-2">
                   <button
@@ -868,7 +869,7 @@ export default function ConfigurationViewPage() {
   const masterItems = controller.getPageItems('masterdata');
 
   return (
-    <div className="configuration-view-page bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+    <div className="min-h-screen overflow-x-hidden overflow-y-auto bg-gradient-to-br from-slate-50 to-slate-100 font-sans">
       <TopNav />
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
@@ -972,3 +973,4 @@ export default function ConfigurationViewPage() {
     </div>
   );
 }
+

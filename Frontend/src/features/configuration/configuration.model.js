@@ -2,11 +2,11 @@ export const VIEW_SYSTEM_PAGES = [
   { id: '1.1', name: 'Dashboard', file: '1.1_dashboard.html' },
   { id: '01', name: 'Dashboard', file: '01_dashboard.html' },
   { id: '02', name: 'New Order', file: '02_new_order.html' },
-  { id: '03', name: 'Stock Assets', file: '03_stock_assets.html' },
+  { id: '03', name: 'Stock Assets', file: '/stock/assets' },
   { id: '04', name: 'Order Details', file: '04_order_details.html' },
   { id: '05', name: 'Client Tracking', file: '05_client_tracking.html' },
   { id: '06', name: 'Worker Management', file: '06_worker_management_new.html' },
-  { id: '07', name: 'Stock Management', file: '07_stock_management.html' },
+  { id: '07', name: 'Stock Management', file: '/stock' },
   { id: '08', name: 'Order', file: '08_order.html' },
   { id: '09', name: 'Expense Management', file: '09_expense_management.html' },
   { id: '10', name: 'Configuration', file: '10_configuration.html' }
@@ -15,7 +15,7 @@ export const VIEW_SYSTEM_PAGES = [
 export const CONFIG_SYSTEM_PAGES = [
   { id: '01', name: 'Orders Dashboard', file: '01_dashboard.html' },
   { id: '06', name: 'Worker Management', file: '06_worker_management_new.html' },
-  { id: '07', name: 'Stock Management', file: '07_stock_management.html' },
+  { id: '07', name: 'Stock Management', file: '/stock' },
   { id: '09', name: 'Expense Management', file: '09_expense_management.html' },
   { id: '10.1', name: 'Configuration View', file: '10.1_configuration_view.html' }
 ];

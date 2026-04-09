@@ -1,5 +1,4 @@
 import useCardsController from './useCardsController';
-import './cards.css';
 
 function TopNav({ onSignOut }) {
   return (
@@ -69,7 +68,10 @@ function DashboardCard({ card, onOpen }) {
     card.subtitleClass || 'text-xs font-medium relative z-10';
 
   return (
-    <div className={`dashboard-card ${card.animationClass}`} onClick={() => onOpen(card.target)}>
+    <div
+      className="cursor-pointer transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl"
+      onClick={() => onOpen(card.target)}
+    >
       <div
         className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 transition-colors h-full"
         style={{ borderColor: 'var(--primary)' }}
@@ -82,7 +84,7 @@ function DashboardCard({ card, onOpen }) {
         >
           <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-5 rounded-full -mr-12 -mt-12"></div>
           <div className="absolute bottom-0 left-0 w-20 h-20 bg-white opacity-5 rounded-full -ml-10 -mb-10"></div>
-          <div className="icon-container w-16 h-16 bg-white bg-opacity-15 rounded-2xl mx-auto mb-1 flex items-center justify-center backdrop-blur-sm shadow-lg relative z-10">
+          <div className="w-16 h-16 rounded-2xl mx-auto mb-1 flex items-center justify-center bg-white/15 backdrop-blur-sm shadow-lg relative z-10">
             <i className={`${card.iconClass} text-3xl text-white`}></i>
           </div>
           <h3 className="text-2xl font-black text-white mb-1 relative z-10">{card.title}</h3>
@@ -110,7 +112,7 @@ export default function CardsPage() {
   const { cards, onOpenCard, onSignOut } = useCardsController();
 
   return (
-    <div className="cards-page bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
+    <div className="min-h-screen overflow-x-hidden overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 font-sans">
       <TopNav onSignOut={onSignOut} />
 
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10">

@@ -41,7 +41,7 @@ function LoginPanel() {
   } = useLoginController();
 
   return (
-    <div className="md:w-[55%] p-6 sm:p-8 md:p-10 lg:p-14 flex flex-col justify-center animate-slideInRight">
+    <div className="md:w-[55%] p-6 sm:p-8 md:p-10 lg:p-14 flex flex-col justify-center">
       <div className="max-w-md mx-auto w-full">
         <div className="text-center mb-4 md:mb-6">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#022758] to-[#1A3A5C] bg-clip-text text-transparent mb-1">
@@ -91,7 +91,7 @@ function LoginPanel() {
               />
               <button
                 type="button"
-                className="password-toggle absolute right-0 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-[#022758] focus:outline-none"
+                className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-gray-400 transition-transform duration-300 hover:scale-110 hover:text-[#022758] focus:outline-none"
                 onClick={onTogglePassword}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
@@ -138,7 +138,7 @@ function LoginPanel() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="btn-shine w-full px-6 py-3.5 sm:py-4 text-sm sm:text-base font-bold text-white bg-gradient-to-r from-[#022758] to-[#1A3A5C] rounded-full transition-all duration-300 shadow-[0_8px_20px_rgba(2,39,88,0.35)] hover:shadow-[0_12px_28px_rgba(2,39,88,0.45)] hover:-translate-y-1 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-80"
+              className="w-full px-6 py-3.5 sm:py-4 text-sm sm:text-base font-bold text-white bg-gradient-to-r from-[#022758] to-[#1A3A5C] rounded-full transition-all duration-300 shadow-[0_8px_20px_rgba(2,39,88,0.35)] hover:shadow-[0_12px_28px_rgba(2,39,88,0.45)] hover:-translate-y-1 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-80"
             >
               {isLoading ? 'Logging in...' : 'Login'}
             </button>
@@ -168,11 +168,11 @@ export default function LoginPage() {
         className="w-full max-w-6xl rounded-3xl md:rounded-[2.5rem] shadow-[0_20px_80px_rgba(0,0,0,0.3)] overflow-hidden flex flex-col md:flex-row"
         style={{ maxHeight: '95vh' }}
       >
-        <div className="bg-gradient-blue relative md:w-[45%] p-12 flex items-center justify-center text-center text-white overflow-hidden">
+        <div className="relative md:w-[45%] p-12 flex items-center justify-center text-center text-white overflow-hidden bg-gradient-to-br from-[#011d45] via-[#022758] to-[#011d45]">
           <div className="relative z-10 w-full h-full flex flex-col items-center justify-center gap-0">
             <div className="flex justify-center items-center p-8">
               <img
-                src="/assets/orbit-logo.png"
+                src="/assets/orbit-logo.svg"
                 alt="Orbit Engineers"
                 className="w-full max-w-sm h-auto object-contain"
               />
