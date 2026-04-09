@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration View - Orbit MES</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        :root { --primary: #022758; --primary-light: #1A3A5C; --secondary: #E8F1F8; --tertiary: #95B3CC; }
+        /* Primary helpers */
+        .primary-gradient { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; }
+        .primary-btn { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; box-shadow: 0 8px 20px rgba(2,39,88,0.14); }
+        .table-header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); }
+        table tbody tr { transition: all 0.2s ease; }
+        table tbody tr:hover { background-color: #f0f9ff; }
+        /* Pagination controls */
+        .pagination-controls { position: relative; width: 100%; justify-content: center; }
+        .pagination-controls .prev-btn { position: absolute; left: 0; }
+        .pagination-controls .next-btn { position: absolute; right: 0; }
+        .pagination-controls .page-buttons { margin: 0 auto; display: flex; gap: 0.5rem; }
+        .btn-view { background: linear-gradient(90deg, var(--primary), rgba(2,39,88,0.85)) !important; color: white !important; box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+        
+        /* Mobile Card View */
+        @media (max-width: 768px) {
+            .table-view { display: none; }
+            .card-view { display: block !important; }
+            .pagination-controls { position: static !important; }
+            .pagination-controls .prev-btn, .pagination-controls .next-btn { position: static !important; }
+            .pagination-controls { flex-direction: column; gap: 0.5rem; }
+            .tab-btn { font-size: 0.75rem; padding: 0.5rem 0.75rem; }
+            nav h1 { font-size: 1rem; }
+        }
+        @media (min-width: 769px) {
+            .table-view { display: block; }
+            .card-view { display: none !important; }
+        }
+        .mobile-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .mobile-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .mobile-card-header {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .mobile-card-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            font-size: 0.85rem;
+        }
+        .mobile-card-label {
+            font-weight: 500;
+            color: #64748b;
+        }
+        .mobile-card-value {
+            font-weight: 500;
+            color: #1e293b;
+            text-align: right;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+    <!-- Top Navbar -->
+    <nav class="sticky top-0 z-40 text-white" style="background:var(--primary);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-[var(--primary)]">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <h1 class="text-lg sm:text-xl font-bold text-white">Configuration</h1>
+            </div>
+            <div class="flex gap-2 sm:gap-3">
+                <a href="1.1_dashboard.html" class="inline-flex items-center gap-2 px-3 py-2 bg-white text-[var(--primary)] rounded-lg font-semibold shadow hover:scale-105 transition-all whitespace-nowrap">
+                    <i class="fas fa-house"></i>
+                    <span class="text-xs sm:text-sm">Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto p-4 sm:p-6">
+        <!-- Stats Cards (primary color to match navbar) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
+            <button onclick="switchTab('machines')" class="primary-gradient rounded-lg text-white shadow-lg p-4 text-left transition-all hover:shadow-2xl hover:scale-105">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white">
+                        <i class="fas fa-cogs text-lg"></i>
+                    </div>
+                    <span class="text-2xl font-bold text-white" id="machineCount">3</span>
+                </div>
+                <p class="text-sm text-white/90 font-medium">Machines</p>
+            </button>
+            <button onclick="switchTab('parts')" class="primary-gradient rounded-lg text-white shadow-lg p-4 text-left transition-all hover:shadow-2xl hover:scale-105">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white">
+                        <i class="fas fa-cube text-lg"></i>
+                    </div>
+                    <span class="text-2xl font-bold text-white" id="partCount">6</span>
+                </div>
+                <p class="text-sm text-white/90 font-medium">Parts</p>
+            </button>
+            <button onclick="switchTab('bom')" class="primary-gradient rounded-lg text-white shadow-lg p-4 text-left transition-all hover:shadow-2xl hover:scale-105">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white">
+                        <i class="fas fa-list text-lg"></i>
+                    </div>
+                    <span class="text-2xl font-bold text-white" id="bomCount">2</span>
+                </div>
+                <p class="text-sm text-white/90 font-medium">BOM Templates</p>
+            </button>
+            <button onclick="switchTab('users')" class="primary-gradient rounded-lg text-white shadow-lg p-4 text-left transition-all hover:shadow-2xl hover:scale-105">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white">
+                        <i class="fas fa-users text-lg"></i>
+                    </div>
+                    <span class="text-2xl font-bold text-white" id="userCount">0</span>
+                </div>
+                <p class="text-sm text-white/90 font-medium">Assigned Users</p>
+            </button>
+            <button onclick="switchTab('masterdata')" class="primary-gradient rounded-lg text-white shadow-lg p-4 text-left transition-all hover:shadow-2xl hover:scale-105">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-white">
+                        <i class="fas fa-database text-lg"></i>
+                    </div>
+                    <span class="text-2xl font-bold text-white" id="masterDataCount">0</span>
+                </div>
+                <p class="text-sm text-white/90 font-medium">Master Data</p>
+            </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mb-4 gap-3">
+            <div class="flex gap-2 bg-white rounded-lg border border-slate-200 p-2 flex-wrap overflow-x-auto">
+                <button class="tab-btn px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-all active whitespace-nowrap" onclick="switchTab('machines')">
+                    <i class="fas fa-cogs mr-1 sm:mr-2"></i>Machines
+                </button>
+                <button class="tab-btn px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-all whitespace-nowrap" onclick="switchTab('parts')">
+                    <i class="fas fa-cube mr-1 sm:mr-2"></i>Parts
+                </button>
+                <button class="tab-btn px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-all whitespace-nowrap" onclick="switchTab('bom')">
+                    <i class="fas fa-list mr-1 sm:mr-2"></i>BOM
+                </button>
+                <button class="tab-btn px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-all whitespace-nowrap" onclick="switchTab('users')">
+                    <i class="fas fa-users mr-1 sm:mr-2"></i>Users
+                </button>
+                <button class="tab-btn px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-all whitespace-nowrap" onclick="switchTab('masterdata')">
+                    <i class="fas fa-database mr-1 sm:mr-2"></i>Master Data
+                </button>
+            </div>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                <select id="processFilter" onchange="loadMachinesData()" class="px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 bg-white w-full sm:w-auto">
+                    <option value="">Select Process</option>
+                    <option value="Casting">Casting</option>
+                    <option value="Machining">Machining</option>
+                    <option value="Assembly">Assembly</option>
+                    <option value="QC">QC</option>
+                    <option value="Paint">Paint</option>
+                    <option value="Final QC">Final QC</option>
+                </select>
+                <select id="masterDataFilter" onchange="loadMasterDataView()" class="px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 bg-white hidden w-full sm:w-auto">
+                    <option value="endConnections">End Connections</option>
+                    <option value="sizes">Sizes</option>
+                    <option value="classes">Classes</option>
+                </select>
+                <a id="addNewBtn" href="10_configuration.html" class="primary-btn px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all w-full sm:w-auto">
+                    <i class="fas fa-plus"></i><span>Add New</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Machines Tab -->
+        <div id="machines" class="tab-content bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+            <!-- Desktop Table View -->
+            <div class="overflow-x-auto table-view">
+                <table class="w-full text-sm">
+                    <thead class="table-header text-white text-xs uppercase">
+                        <tr>
+                            <th class="px-4 py-3 text-left">Process Type</th>
+                            <th class="px-4 py-3 text-left">Machine Name</th>
+                            <th class="px-4 py-3 text-left">Code</th>
+                            <th class="px-4 py-3 text-left">Size</th>
+                            <th class="px-4 py-3 text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="machinesTable">
+                        <tr class="border-t border-slate-200">
+                            <td class="px-4 py-3 text-slate-700">Casting</td>
+                            <td class="px-4 py-3 font-semibold text-slate-900">Hydraulic Press</td>
+                            <td class="px-4 py-3 font-semibold text-slate-900">M001</td>
+                            <td class="px-4 py-3 text-slate-700">500 units/hr</td>
+                        </tr>
+                        <tr class="border-t border-slate-200">
+                            <td class="px-4 py-3 text-slate-700">Machining</td>
+                            <td class="px-4 py-3 font-semibold text-slate-900">CNC Machine</td>
+                            <td class="px-4 py-3 font-semibold text-slate-900">M002</td>
+                            <td class="px-4 py-3 text-slate-700">250 units/hr</td>
+                        </tr>
+                        <tr class="border-t border-slate-200">
+                            <td class="px-4 py-3 text-slate-700">Assembly</td>
+                            <td class="px-4 py-3 font-semibold text-slate-900">Assembly Robot</td>
+                            <td class="px-4 py-3 font-semibold text-slate-900">M003</td>
+                            <td class="px-4 py-3 text-slate-700">300 units/hr</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Mobile Card View -->
+            <div class="card-view p-3" id="machinesCardView"></div>
+            <!-- Pagination for Machines -->
+            <div class="mt-4 bg-white rounded-lg p-3 sm:p-4 border-t border-slate-200">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
+                    <div class="text-xs sm:text-sm text-slate-600">
+                        Showing <span id="machinesShowRange" class="font-semibold text-slate-900">0-0</span> of <span id="machinesShowTotal" class="font-semibold text-slate-900">0</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 sm:gap-2 pagination-controls">
+                        <button id="machinesPrevBtn" onclick="prevPage('machines')" class="prev-btn px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-400 rounded-lg text-xs font-semibold transition-all">Previous</button>
+                        <div id="machinesPageButtons" class="page-buttons flex items-center gap-1.5 sm:gap-2 px-2"></div>
+                        <button id="machinesNextBtn" onclick="nextPage('machines')" class="next-btn px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parts Tab -->
+        <div id="parts" class="tab-content hidden bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+            <!-- Desktop Table View -->
+            <div class="overflow-x-auto table-view">
+                <table class="w-full text-sm">
+                    <thead id="partsTableHead" class="table-header text-white"></thead>
+                    <tbody id="partsTable">
+                    </tbody>
+                </table>
+            </div>
+            <!-- Mobile Card View -->
+            <div class="card-view p-3" id="partsCardView"></div>
+            <!-- Pagination for Parts -->
+            <div class="mt-4 bg-white rounded-lg p-3 sm:p-4 border-t border-slate-200">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
+                    <div class="text-xs sm:text-sm text-slate-600">
+                        Showing <span id="partsShowRange" class="font-semibold text-slate-900">0-0</span> of <span id="partsShowTotal" class="font-semibold text-slate-900">0</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 sm:gap-2 pagination-controls">
+                        <button id="partsPrevBtn" onclick="prevPage('parts')" class="prev-btn px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-400 rounded-lg text-xs font-semibold transition-all">Previous</button>
+                        <div id="partsPageButtons" class="page-buttons flex items-center gap-1.5 sm:gap-2 px-2"></div>
+                        <button id="partsNextBtn" onclick="nextPage('parts')" class="next-btn px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOM Tab -->
+        <div id="bom" class="tab-content hidden bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+            <!-- Desktop Table View -->
+            <div class="overflow-x-auto table-view">
+                <table class="w-full text-sm">
+                    <thead class="table-header text-white" id="bomTableHead">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-semibold">Valve Name</th>
+                            <th class="px-4 py-3 text-left font-semibold">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bomTable"></tbody>
+                </table>
+            </div>
+            <!-- Mobile Card View -->
+            <div class="card-view p-3" id="bomCardView"></div>
+            <!-- Pagination for BOM -->
+            <div class="mt-4 bg-white rounded-lg p-3 sm:p-4 border-t border-slate-200">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
+                    <div class="text-xs sm:text-sm text-slate-600">
+                        Showing <span id="bomShowRange" class="font-semibold text-slate-900">0-0</span> of <span id="bomShowTotal" class="font-semibold text-slate-900">0</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 sm:gap-2 pagination-controls">
+                        <button id="bomPrevBtn" onclick="prevPage('bom')" class="prev-btn px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-400 rounded-lg text-xs font-semibold transition-all">Previous</button>
+                        <div id="bomPageButtons" class="page-buttons flex items-center gap-1.5 sm:gap-2 px-2"></div>
+                        <button id="bomNextBtn" onclick="nextPage('bom')" class="next-btn px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="users" class="tab-content hidden bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+            <!-- Desktop Table View -->
+            <div class="overflow-x-auto table-view">
+                <table class="w-full text-sm">
+                    <thead class="table-header text-white">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-semibold">User Name</th>
+                            <th class="px-4 py-3 text-left font-semibold">Email</th>
+                            <th class="px-4 py-3 text-left font-semibold">Password</th>
+                            <th class="px-4 py-3 text-left font-semibold">Role</th>
+                            <th class="px-4 py-3 text-left font-semibold">View</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody" class="divide-y divide-slate-200">
+                    </tbody>
+                </table>
+            </div>
+            <!-- Mobile Card View -->
+            <div class="card-view p-3" id="usersCardView"></div>
+            <!-- Pagination for Users -->
+            <div class="mt-4 bg-white rounded-lg p-3 sm:p-4 border-t border-slate-200">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
+                    <div class="text-xs sm:text-sm text-slate-600">
+                        Showing <span id="usersShowRange" class="font-semibold text-slate-900">0-0</span> of <span id="usersShowTotal" class="font-semibold text-slate-900">0</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 sm:gap-2 pagination-controls">
+                        <button id="usersPrevBtn" onclick="prevPage('users')" class="prev-btn px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-400 rounded-lg text-xs font-semibold transition-all">Previous</button>
+                        <div id="usersPageButtons" class="page-buttons flex items-center gap-1.5 sm:gap-2 px-2"></div>
+                        <button id="usersNextBtn" onclick="nextPage('users')" class="next-btn px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Master Data Tab -->
+        <div id="masterdata" class="tab-content hidden bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+            <!-- Desktop Table View -->
+            <div class="overflow-x-auto table-view">
+                <table class="w-full text-sm">
+                    <thead class="table-header text-white">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-semibold">#</th>
+                            <th class="px-4 py-3 text-left font-semibold">Value</th>
+                            <th class="px-4 py-3 text-center font-semibold">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterDataTableBody" class="divide-y divide-slate-200">
+                    </tbody>
+                </table>
+            </div>
+            <!-- Mobile Card View -->
+            <div class="card-view p-3" id="masterDataCardView"></div>
+            <!-- Pagination for Master Data -->
+            <div class="mt-4 bg-white rounded-lg p-3 sm:p-4 border-t border-slate-200">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
+                    <div class="text-xs sm:text-sm text-slate-600">
+                        Showing <span id="masterdataShowRange" class="font-semibold text-slate-900">0-0</span> of <span id="masterdataShowTotal" class="font-semibold text-slate-900">0</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 sm:gap-2 pagination-controls">
+                        <button id="masterdataPrevBtn" onclick="prevPage('masterdata')" class="prev-btn px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-400 rounded-lg text-xs font-semibold transition-all">Previous</button>
+                        <div id="masterdataPageButtons" class="page-buttons flex items-center gap-1.5 sm:gap-2 px-2"></div>
+                        <button id="masterdataNextBtn" onclick="nextPage('masterdata')" class="next-btn px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-all">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Permissions Modal -->
+        <div id="viewPermissionsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div class="sticky top-0 text-white p-4 flex items-center justify-between" style="background: var(--primary);">
+                    <h2 class="text-lg font-bold" id="viewModalTitle">User Permissions</h2>
+                    <button onclick="closeViewPermissionsModal()" class="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-lg flex items-center justify-center transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="p-6">
+                    <div id="viewPermissionsContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // System pages array
+        const systemPages = [
+            { id: '1.1', name: 'Dashboard', file: '1.1_dashboard.html' },
+            { id: '01', name: 'Dashboard', file: '01_dashboard.html' },
+            { id: '02', name: 'New Order', file: '02_new_order.html' },
+            { id: '03', name: 'Stock Assets', file: '03_stock_assets.html' },
+            { id: '04', name: 'Order Details', file: '04_order_details.html' },
+            { id: '05', name: 'Client Tracking', file: '05_client_tracking.html' },
+            { id: '06', name: 'Worker Management', file: '06_worker_management_new.html' },
+            { id: '07', name: 'Stock Management', file: '07_stock_management.html' },
+            { id: '08', name: 'Order', file: '08_order.html' },
+            { id: '09', name: 'Expense Management', file: '09_expense_management.html' },
+            { id: '10', name: 'Configuration', file: '10_configuration.html' }
+        ];
+
+        // Pagination state for each tab
+        const paginationState = {
+            machines: { currentPage: 1, itemsPerPage: 10 },
+            parts: { currentPage: 1, itemsPerPage: 10 },
+            bom: { currentPage: 1, itemsPerPage: 10 },
+            users: { currentPage: 1, itemsPerPage: 10 },
+            masterdata: { currentPage: 1, itemsPerPage: 10 }
+        };
+
+        function goToPage(tab, n) {
+            const state = paginationState[tab];
+            const items = getItemsForTab(tab);
+            const totalPages = Math.max(1, Math.ceil(items.length / state.itemsPerPage));
+            if (n < 1) n = 1;
+            if (n > totalPages) n = totalPages;
+            state.currentPage = n;
+            if (tab === 'machines') loadMachinesData();
+            else if (tab === 'parts') loadPartsData();
+            else if (tab === 'bom') loadBOMData();
+            else if (tab === 'users') loadOrbitUsersForView();
+            else if (tab === 'masterdata') loadMasterDataView();
+        }
+
+        function prevPage(tab) {
+            const state = paginationState[tab];
+            if (state.currentPage > 1) {
+                state.currentPage -= 1;
+                if (tab === 'machines') loadMachinesData();
+                else if (tab === 'parts') loadPartsData();
+                else if (tab === 'bom') loadBOMData();
+                else if (tab === 'users') loadOrbitUsersForView();
+            }
+        }
+
+        function nextPage(tab) {
+            const state = paginationState[tab];
+            const items = getItemsForTab(tab);
+            const totalPages = Math.max(1, Math.ceil(items.length / state.itemsPerPage));
+            if (state.currentPage < totalPages) {
+                state.currentPage += 1;
+                if (tab === 'machines') loadMachinesData();
+                else if (tab === 'parts') loadPartsData();
+                else if (tab === 'bom') loadBOMData();
+                else if (tab === 'users') loadOrbitUsersForView();
+                else if (tab === 'masterdata') loadMasterDataView();
+            }
+        }
+
+        function getItemsForTab(tab) {
+            if (tab === 'machines') return JSON.parse(localStorage.getItem('machines') || '[]');
+            else if (tab === 'parts') {
+                let parts = JSON.parse(localStorage.getItem('parts') || '[]');
+                const categoryFilter = (document.getElementById('partsCategoryFilter')?.value || '').trim();
+                if (categoryFilter) {
+                    parts = parts.filter(p => (p.category || '').toString().toLowerCase() === categoryFilter.toLowerCase());
+                }
+                return parts;
+            }
+            else if (tab === 'bom') {
+                const boms = JSON.parse(localStorage.getItem('boms') || '[]');
+                let expanded = [];
+                boms.forEach(bom => {
+                    bom.parts.forEach(part => {
+                        expanded.push({
+                            template_name: bom.template_name,
+                            category: bom.category || '',
+                            part_name: part.partName,
+                            qty: part.quantity,
+                            remarks: part.remarks
+                        });
+                    });
+                });
+                return expanded;
+            }
+            else if (tab === 'users') return JSON.parse(localStorage.getItem('OrbitUsers') || '[]');
+            else if (tab === 'masterdata') {
+                const masterData = JSON.parse(localStorage.getItem('masterData') || '{}');
+                const filterType = document.getElementById('masterDataFilter')?.value || 'endConnections';
+                return masterData[filterType] || [];
+            }
+            return [];
+        }
+
+        function renderPagination(tab, totalPages, totalItems, start, end) {
+            const state = paginationState[tab];
+            const pageButtonsDiv = document.getElementById(tab + 'PageButtons');
+            pageButtonsDiv.innerHTML = '';
+
+            const maxButtons = 5;
+            let startPage = 1;
+            let endPage = totalPages;
+
+            if (totalPages > maxButtons) {
+                const half = Math.floor(maxButtons / 2);
+                startPage = Math.max(1, state.currentPage - half);
+                endPage = Math.min(totalPages, state.currentPage + half);
+                if (startPage === 1) endPage = Math.min(maxButtons, totalPages);
+                if (endPage === totalPages) startPage = Math.max(1, totalPages - maxButtons + 1);
+            }
+
+            if (startPage > 1) {
+                pageButtonsDiv.innerHTML += `<button onclick="goToPage('${tab}', 1)" class="px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-700 rounded-lg text-xs font-semibold">1</button>`;
+                if (startPage > 2) { pageButtonsDiv.innerHTML += `<span class="px-2 text-slate-400">...</span>`; }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === state.currentPage;
+                const cls = isActive ? 'px-2.5 sm:px-3 py-1.5 btn-view rounded-lg text-xs font-bold' : 'px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-100';
+                pageButtonsDiv.innerHTML += `<button onclick="goToPage('${tab}', ${i})" class="${cls}">${i}</button>`;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) { pageButtonsDiv.innerHTML += `<span class="px-2 text-slate-400">...</span>`; }
+                pageButtonsDiv.innerHTML += `<button onclick="goToPage('${tab}', ${totalPages})" class="px-2.5 sm:px-3 py-1.5 bg-slate-50 border-2 border-slate-200 text-slate-700 rounded-lg text-xs font-semibold">${totalPages}</button>`;
+            }
+
+            const prevBtn = document.getElementById(tab + 'PrevBtn');
+            const nextBtn = document.getElementById(tab + 'NextBtn');
+            if (state.currentPage === 1) {
+                prevBtn.disabled = true;
+                prevBtn.classList.remove('btn-view');
+                prevBtn.classList.add('text-slate-400');
+            } else {
+                prevBtn.disabled = false;
+                prevBtn.classList.remove('text-slate-400');
+                prevBtn.classList.add('btn-view');
+            }
+
+            if (state.currentPage === totalPages) {
+                nextBtn.disabled = true;
+                nextBtn.classList.remove('btn-view');
+                nextBtn.classList.add('text-slate-400');
+            } else {
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('text-slate-400');
+                nextBtn.classList.add('btn-view');
+            }
+
+            document.getElementById(tab + 'ShowRange').textContent = totalItems === 0 ? '0-0' : `${start}-${end}`;
+            document.getElementById(tab + 'ShowTotal').textContent = totalItems;
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active', 'primary-gradient', 'text-white'));
+            
+            document.getElementById(tabName).classList.remove('hidden');
+            event.target.closest('.tab-btn')?.classList.add('active', 'primary-gradient', 'text-white');
+
+            // Show/hide process filter dropdown only on Machines tab
+            const processFilterEl = document.getElementById('processFilter');
+            if (processFilterEl) {
+                if (tabName === 'machines') processFilterEl.classList.remove('hidden');
+                else {
+                    processFilterEl.classList.add('hidden');
+                    processFilterEl.value = '';
+                }
+            }
+
+            // Show/hide master data filter dropdown only on Master Data tab
+            const masterDataFilterEl = document.getElementById('masterDataFilter');
+            if (masterDataFilterEl) {
+                if (tabName === 'masterdata') {
+                    masterDataFilterEl.classList.remove('hidden');
+                    masterDataFilterEl.value = 'endConnections';
+                } else {
+                    masterDataFilterEl.classList.add('hidden');
+                }
+            }
+
+            // Load data based on tab
+            if (tabName === 'users') {
+                loadOrbitUsersForView();
+            } else if (tabName === 'machines') {
+                loadMachinesData();
+            } else if (tabName === 'parts') {
+                loadPartsData();
+            } else if (tabName === 'bom') {
+                loadBOMData();
+            } else if (tabName === 'masterdata') {
+                loadMasterDataView();
+            }
+        }
+
+        // Load Machines Data
+        function loadMachinesData() {
+            let machines = JSON.parse(localStorage.getItem('machines') || '[]');
+            
+            // Process filter from header selector
+            const processFilter = (document.getElementById('processFilter')?.value || '').trim();
+            if (processFilter) {
+                machines = machines.filter(m => (m.process || '').toString() === processFilter);
+            }
+            
+            // Reverse array to show newest machines first
+            const reversedMachines = [...machines].reverse();
+            const tbody = document.getElementById('machinesTable');
+            const cardView = document.getElementById('machinesCardView');
+            const state = paginationState.machines;
+            
+            const totalItems = reversedMachines.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / state.itemsPerPage));
+            const startIdx = (state.currentPage - 1) * state.itemsPerPage;
+            const endIdx = Math.min(startIdx + state.itemsPerPage, totalItems);
+            const pageItems = reversedMachines.slice(startIdx, endIdx);
+            
+            if (machines.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-4 py-8 text-center text-slate-500">
+                            <i class="fas fa-cogs text-4xl mb-2 text-slate-300"></i>
+                            <p>No machines found. Add machines from the configuration page.</p>
+                        </td>
+                    </tr>
+                `;
+                cardView.innerHTML = `
+                    <div class="text-center py-8 text-slate-500">
+                        <i class="fas fa-cogs text-4xl mb-2 text-slate-300"></i>
+                        <p>No machines found. Add machines from the configuration page.</p>
+                    </div>
+                `;
+                renderPagination('machines', 1, 0, 0, 0);
+                document.getElementById('machineCount').textContent = 0;
+                return;
+            }
+            
+            tbody.innerHTML = pageItems.map((machine, index) => {
+                const actualIndex = machines.length - 1 - (startIdx + index);
+                const queryParams = encodeQueryParams({
+                    machineCode: machine.code,
+                    machineName: machine.name,
+                    process: machine.process,
+                    size: machine.size
+                });
+                return `
+                <tr class="border-t border-slate-200 hover:bg-blue-50 transition-colors">
+                    <td class="px-4 py-3 text-slate-700">${machine.process || 'N/A'}</td>
+                    <td class="px-4 py-3 font-semibold text-slate-900">${machine.name}</td>
+                    <td class="px-4 py-3 font-semibold text-slate-900">${machine.code || `M${String(startIdx + index + 1).padStart(3, '0')}`}</td>
+                    <td class="px-4 py-3 text-slate-700">${machine.size || 'N/A'}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <button onclick="event.stopPropagation(); editMachine(${actualIndex});" class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600 transition-all">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button onclick="event.stopPropagation(); deleteMachine(${actualIndex});" class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600 transition-all">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            }).join('');
+            
+            // Mobile Card View
+            cardView.innerHTML = pageItems.map((machine, index) => {
+                const actualIndex = machines.length - 1 - (startIdx + index);
+                const queryParams = encodeQueryParams({
+                    machineCode: machine.code,
+                    machineName: machine.name,
+                    process: machine.process,
+                    size: machine.size
+                });
+                return `
+                <div class="mobile-card">
+                    <div class="mobile-card-header">
+                        <i class="fas fa-cog mr-2"></i>${machine.name}
+                    </div>
+                    <div class="mobile-card-row">
+                        <span class="mobile-card-label">Process:</span>
+                        <span class="mobile-card-value">${machine.process || 'N/A'}</span>
+                    </div>
+                    <div class="mobile-card-row">
+                        <span class="mobile-card-label">Code:</span>
+                        <span class="mobile-card-value">${machine.code || `M${String(startIdx + index + 1).padStart(3, '0')}`}</span>
+                    </div>
+                    <div class="mobile-card-row">
+                        <span class="mobile-card-label">Size:</span>
+                        <span class="mobile-card-value">${machine.size || 'N/A'}</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200">
+                        <button onclick="editMachine(${actualIndex});" class="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600 transition-all">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button onclick="deleteMachine(${actualIndex});" class="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600 transition-all">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+            }).join('');
+            
+            document.getElementById('machineCount').textContent = reversedMachines.length;
+            renderPagination('machines', totalPages, totalItems, startIdx + 1, endIdx);
+        }
+
+
+
+        // Load Parts Data (render headers and rows based on selected category)
+        function loadPartsData() {
+            let parts = JSON.parse(localStorage.getItem('parts') || '[]');
+            const tbody = document.getElementById('partsTable');
+            const thead = document.getElementById('partsTableHead');
+            const state = paginationState.parts;
+            
+            // Category filter from header selector
+            const categoryFilter = (document.getElementById('partsCategoryFilter')?.value || '').trim();
+            if (categoryFilter) {
+                parts = parts.filter(p => (p.category || '').toString().toLowerCase() === categoryFilter.toLowerCase());
+                state.currentPage = 1; // Reset to page 1 when filter changes
+            }
+
+            const totalItems = parts.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / state.itemsPerPage));
+            const startIdx = (state.currentPage - 1) * state.itemsPerPage;
+            const endIdx = Math.min(startIdx + state.itemsPerPage, totalItems);
+            const pageItems = parts.slice(startIdx, endIdx);
+
+            // Unified header for Parts table
+            let headerHTML = `
+                <tr>
+                    <th class="px-4 py-3 text-left font-semibold">ITEM NAME</th>
+                    <th class="px-4 py-3 text-left font-semibold">MODEL NO</th>
+                    <th class="px-4 py-3 text-left font-semibold">SIZE</th>
+                    <th class="px-4 py-3 text-left font-semibold">MOC</th>
+                    <th class="px-4 py-3 text-left font-semibold">CLASS</th>
+                    <th class="px-4 py-3 text-left font-semibold">REMARK</th>
+                    <th class="px-4 py-3 text-center font-semibold">ACTIONS</th>
+                </tr>
+            `;
+
+            thead.innerHTML = headerHTML;
+            const colCount = (headerHTML.match(/<th/g) || []).length || 1;
+
+            if (parts.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="${colCount}" class="px-4 py-8 text-center text-slate-500">
+                            <i class="fas fa-cube text-4xl mb-2 text-slate-300"></i>
+                            <p>No parts found${categoryFilter ? ' for selected category.' : '. Add parts from the configuration page.'}</p>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('partCount').textContent = 0;
+                renderPagination('parts', 1, 0, 0, 0);
+                return;
+            }
+
+            // Build rows with unified columns
+            tbody.innerHTML = pageItems.map((part, idx) => {
+                const partIndex = parts.findIndex(p => JSON.stringify(p) === JSON.stringify(part));
+                return `
+                    <tr class="border-t border-slate-200 hover:bg-slate-50">
+                        <td class="px-4 py-3 font-semibold text-slate-900">${part.itemName || part.item || part.part_name || 'N/A'}</td>
+                        <td class="px-4 py-3 text-slate-700">${part.modelNo || part.model || part.equipment || '-'}</td>
+                        <td class="px-4 py-3 text-slate-700">${part.size || part.qty || '-'}</td>
+                        <td class="px-4 py-3 text-slate-700">${part.moc || '-'}</td>
+                        <td class="px-4 py-3 text-slate-700">${part.class || part.invoice || '-'}</td>
+                        <td class="px-4 py-3 text-slate-700">${part.remark || part.remarks || '-'}</td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="editPart(${partIndex})" class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs mr-1 font-medium" title="Edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button onclick="deletePart(${partIndex})" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-medium" title="Delete">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Mobile Card View for Parts
+            const cardView = document.getElementById('partsCardView');
+            if (parts.length === 0) {
+                cardView.innerHTML = `
+                    <div class="text-center py-8 text-slate-500">
+                        <i class="fas fa-cube text-4xl mb-2 text-slate-300"></i>
+                        <p>No parts found${categoryFilter ? ' for selected category.' : '. Add parts from the configuration page.'}</p>
+                    </div>
+                `;
+            } else {
+                cardView.innerHTML = pageItems.map((part, idx) => {
+                    const partIndex = parts.findIndex(p => JSON.stringify(p) === JSON.stringify(part));
+                    return `
+                    <div class="mobile-card">
+                        <div class="mobile-card-header">
+                            <i class="fas fa-cube mr-2"></i>${part.itemName || part.item || part.part_name || 'N/A'}
+                        </div>
+                        <div class="mobile-card-row">
+                            <span class="mobile-card-label">Model No:</span>
+                            <span class="mobile-card-value">${part.modelNo || part.model || part.equipment || '-'}</span>
+                        </div>
+                        <div class="mobile-card-row">
+                            <span class="mobile-card-label">Size:</span>
+                            <span class="mobile-card-value">${part.size || part.qty || '-'}</span>
+                        </div>
+                        <div class="mobile-card-row">
+                            <span class="mobile-card-label">MOC:</span>
+                            <span class="mobile-card-value">${part.moc || '-'}</span>
+                        </div>
+                        <div class="mobile-card-row">
+                            <span class="mobile-card-label">Class:</span>
+                            <span class="mobile-card-value">${part.class || part.invoice || '-'}</span>
+                        </div>
+                        <div class="mobile-card-row">
+                            <span class="mobile-card-label">Remark:</span>
+                            <span class="mobile-card-value">${part.remark || part.remarks || '-'}</span>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-slate-200 flex gap-2">
+                            <button onclick="editPart(${partIndex})" class="flex-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium">
+                                <i class="fas fa-edit mr-1"></i> Edit
+                            </button>
+                            <button onclick="deletePart(${partIndex})" class="flex-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium">
+                                <i class="fas fa-trash mr-1"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+            }
+
+            // Update count to reflect filtered list
+            document.getElementById('partCount').textContent = parts.length;
+            renderPagination('parts', totalPages, totalItems, totalItems === 0 ? 0 : startIdx + 1, endIdx);
+        }
+
+        // Load BOM Data
+        function loadBOMData() {
+            const boms = JSON.parse(localStorage.getItem('boms') || '[]');
+            const tbody = document.getElementById('bomTable');
+            const cardView = document.getElementById('bomCardView');
+            const state = paginationState.bom;
+
+            const totalItems = boms.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / state.itemsPerPage));
+            const startIdx = (state.currentPage - 1) * state.itemsPerPage;
+            const endIdx = Math.min(startIdx + state.itemsPerPage, totalItems);
+            const pageItems = boms.slice(startIdx, endIdx);
+            
+            if (boms.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="2" class="px-4 py-8 text-center text-slate-500">
+                            <i class="fas fa-list text-4xl mb-2 text-slate-300"></i>
+                            <p>No BOM templates found. Create BOMs from the configuration page.</p>
+                        </td>
+                    </tr>
+                `;
+                cardView.innerHTML = `
+                    <div class="text-center py-8 text-slate-500">
+                        <i class="fas fa-list text-4xl mb-2 text-slate-300"></i>
+                        <p>No BOM templates found. Create BOMs from the configuration page.</p>
+                    </div>
+                `;
+                renderPagination('bom', 1, 0, 0, 0);
+                document.getElementById('bomCount').textContent = 0;
+                return;
+            }
+
+            // Show only valve name and actions
+            tbody.innerHTML = pageItems.map((bom, idx) => {
+                const actualIndex = boms.indexOf(bom);
+                const valveName = bom.valveName || bom.partName || '-';
+                
+                return `
+                    <tr class="border-t border-slate-200 hover:bg-blue-50">
+                        <td class="px-4 py-3 text-slate-700 font-medium">${valveName}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <button onclick="editBOM(${actualIndex})" class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600 transition-all">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button onclick="deleteBOM(${actualIndex})" class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600 transition-all">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Mobile Card View for BOM
+            cardView.innerHTML = pageItems.map((bom, idx) => {
+                const actualIndex = boms.indexOf(bom);
+                const valveName = bom.valveName || bom.partName || '-';
+                
+                return `
+                    <div class="mobile-card">
+                        <div class="mobile-card-header"><i class="fas fa-list mr-2"></i>${valveName}</div>
+                        <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200">
+                            <button onclick="editBOM(${actualIndex})" class="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600 transition-all">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button onclick="deleteBOM(${actualIndex})" class="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600 transition-all">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            const bomCount = boms.length;
+            document.getElementById('bomCount').textContent = bomCount;
+            renderPagination('bom', totalPages, totalItems, totalItems === 0 ? 0 : startIdx + 1, endIdx);
+        }
+
+        function loadOrbitUsersForView() {
+            const users = JSON.parse(localStorage.getItem('OrbitUsers')) || [];
+            const state = paginationState.users;
+            
+            const totalItems = users.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / state.itemsPerPage));
+            const startIdx = (state.currentPage - 1) * state.itemsPerPage;
+            const endIdx = Math.min(startIdx + state.itemsPerPage, totalItems);
+            const pageItems = users.slice(startIdx, endIdx);
+            
+            renderOrbitUsersForView(pageItems);
+            document.getElementById('userCount').textContent = users.length;
+            renderPagination('users', totalPages, totalItems, totalItems === 0 ? 0 : startIdx + 1, endIdx);
+        }
+
+        function renderOrbitUsersForView(users) {
+            const tbody = document.getElementById('usersTableBody');
+            const cardView = document.getElementById('usersCardView');
+            tbody.innerHTML = '';
+
+            const roleColors = {
+                'Admin': 'bg-red-100 text-red-700',
+                'Manager': 'bg-blue-100 text-blue-700',
+                'User': 'bg-green-100 text-green-700'
+            };
+
+            users.forEach(user => {
+                const assignedPages = Object.keys(user.permissions || {})
+                    .filter(pageId => {
+                        const perms = user.permissions[pageId];
+                        return perms && (perms.create || perms.read || perms.update || perms.delete);
+                    })
+                    .length;
+
+                const row = document.createElement('tr');
+                row.className = 'border-t border-slate-200 hover:bg-slate-50 transition-colors';
+                row.innerHTML = `
+                    <td class="px-4 py-3 font-semibold text-slate-900">${user.name}</td>
+                    <td class="px-4 py-3 text-slate-700">${user.email}</td>
+                    <td class="px-4 py-3 text-slate-700">${user.password || 'N/A'}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${roleColors[user.role] || 'bg-gray-100 text-gray-700'}">
+                            ${user.role}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-slate-700">
+                        <a href="10_configuration.html?tab=users&userId=${user.id}" class="btn-view px-3 py-1 rounded-lg text-xs font-semibold inline-block text-center">View</a>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Mobile Card View for Users
+            if (users.length === 0) {
+                cardView.innerHTML = `
+                    <div class="text-center py-8 text-slate-500">
+                        <i class="fas fa-users text-4xl mb-2 text-slate-300"></i>
+                        <p>No users found.</p>
+                    </div>
+                `;
+            } else {
+                cardView.innerHTML = users.map(user => {
+                    const assignedPages = Object.keys(user.permissions || {})
+                        .filter(pageId => {
+                            const perms = user.permissions[pageId];
+                            return perms && (perms.create || perms.read || perms.update || perms.delete);
+                        })
+                        .length;
+                    
+                    return `
+                    <div class="mobile-card">
+                        <div class="mobile-card-header">
+                            <i class="fas fa-user mr-2"></i>${user.name}
+                        </div>
+                        <div class="mobile-card-row">
+                            <span class="mobile-card-label">Email:</span>
+                            <span class="mobile-card-value">${user.email}</span>
+                        </div>
+                        <div class="mobile-card-row">
+                            <span class="mobile-card-label">Role:</span>
+                            <span class="mobile-card-value"><span class="px-2 py-1 rounded-full text-xs font-semibold ${roleColors[user.role] || 'bg-gray-100 text-gray-700'}">${user.role}</span></span>
+                        </div>
+                        <div class="mobile-card-row">
+                            <span class="mobile-card-label">Assigned Pages:</span>
+                            <span class="mobile-card-value">${assignedPages} pages</span>
+                        </div>
+                        <div class="mt-3">
+                            <a href="10_configuration.html?tab=users&userId=${user.id}" class="btn-view px-4 py-2 rounded-lg text-sm font-semibold inline-block text-center w-full">View Details</a>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+            }
+        }
+
+        function viewUserPermissionsFromView(userId) {
+            const users = JSON.parse(localStorage.getItem('OrbitUsers')) || [];
+            const user = users.find(u => u.id === userId);
+            
+            if (!user) return;
+
+            let permContent = '<div class="space-y-4">';
+            permContent += `<h3 class="font-bold text-lg mb-4" style="color: var(--primary);">${user.name}</h3>`;
+            permContent += `<div class="grid grid-cols-2 gap-2 mb-4">
+                <p><strong>Email:</strong> ${user.email}</p>
+                <p><strong>Role:</strong> ${user.role}</p>
+            </div>`;
+            
+            permContent += '<table class="w-full text-xs border-collapse">';
+            permContent += '<thead><tr style="background: var(--primary); color: white;"><th class="border p-2 text-left">Page</th><th class="border p-2 text-center">C</th><th class="border p-2 text-center">R</th><th class="border p-2 text-center">U</th><th class="border p-2 text-center">D</th></tr></thead>';
+            permContent += '<tbody>';
+
+            systemPages.forEach(page => {
+                const perms = user.permissions[page.id] || { create: false, read: false, update: false, delete: false };
+                permContent += `<tr style="border: 1px solid #e0e0e0;">
+                    <td class="p-2" style="font-weight: 500;">${page.name}</td>
+                    <td class="p-2 text-center">${perms.create ? '<i class="fas fa-check text-green-600"></i>' : '-'}</td>
+                    <td class="p-2 text-center">${perms.read ? '<i class="fas fa-check text-green-600"></i>' : '-'}</td>
+                    <td class="p-2 text-center">${perms.update ? '<i class="fas fa-check text-green-600"></i>' : '-'}</td>
+                    <td class="p-2 text-center">${perms.delete ? '<i class="fas fa-check text-green-600"></i>' : '-'}</td>
+                </tr>`;
+            });
+
+            permContent += '</tbody></table>';
+            permContent += '</div>';
+
+            document.getElementById('viewModalTitle').textContent = `${user.name} - Permissions`;
+            document.getElementById('viewPermissionsContent').innerHTML = permContent;
+            document.getElementById('viewPermissionsModal').classList.remove('hidden');
+        }
+
+        function closeViewPermissionsModal() {
+            document.getElementById('viewPermissionsModal').classList.add('hidden');
+        }
+
+        // Load Master Data View
+        function loadMasterDataView() {
+            const masterData = JSON.parse(localStorage.getItem('masterData') || '{}');
+            const filterType = document.getElementById('masterDataFilter')?.value || 'endConnections';
+            const items = masterData[filterType] || [];
+            
+            const tbody = document.getElementById('masterDataTableBody');
+            const cardView = document.getElementById('masterDataCardView');
+            const state = paginationState.masterdata;
+            
+            const totalItems = items.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / state.itemsPerPage));
+            const startIdx = (state.currentPage - 1) * state.itemsPerPage;
+            const endIdx = Math.min(startIdx + state.itemsPerPage, totalItems);
+            const pageItems = items.slice(startIdx, endIdx);
+            
+            const filterTypeLabel = {
+                'endConnections': 'End Connection',
+                'sizes': 'Size',
+                'classes': 'Class'
+            }[filterType] || filterType;
+            
+            // Desktop Table View
+            if (items.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="px-4 py-8 text-center text-slate-500">
+                            <i class="fas fa-database text-4xl mb-2 text-slate-300 block"></i>
+                            No ${filterTypeLabel}s found. Add them in the configuration page.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tbody.innerHTML = pageItems.map((item, idx) => {
+                    const globalIndex = startIdx + idx;
+                    return `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-4 py-3 text-slate-700 font-medium">${globalIndex + 1}</td>
+                            <td class="px-4 py-3 text-slate-700">${item}</td>
+                            <td class="px-4 py-3 text-center">
+                                <button onclick="deleteMasterDataItem('${filterType}', ${globalIndex})" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs transition-all">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+            
+            // Mobile Card View
+            if (items.length === 0) {
+                cardView.innerHTML = `
+                    <div class="text-center py-8 text-slate-500">
+                        <i class="fas fa-database text-4xl mb-2 text-slate-300"></i>
+                        <p>No ${filterTypeLabel}s found.</p>
+                    </div>
+                `;
+            } else {
+                cardView.innerHTML = pageItems.map((item, idx) => {
+                    const globalIndex = startIdx + idx;
+                    return `
+                        <div class="mobile-card">
+                            <div class="mobile-card-header">
+                                <i class="fas fa-tag mr-2"></i>${filterTypeLabel} #${globalIndex + 1}
+                            </div>
+                            <div class="mobile-card-row">
+                                <span class="mobile-card-label">Value:</span>
+                                <span class="mobile-card-value">${item}</span>
+                            </div>
+                            <div class="mt-3">
+                                <button onclick="deleteMasterDataItem('${filterType}', ${globalIndex})" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm w-full">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            // Update count
+            const masterData_count = (masterData.endConnections || []).length + 
+                                     (masterData.sizes || []).length + 
+                                     (masterData.classes || []).length;
+            document.getElementById('masterDataCount').textContent = masterData_count;
+            
+            renderPagination('masterdata', totalPages, totalItems, totalItems === 0 ? 0 : startIdx + 1, endIdx);
+        }
+
+        function deleteMasterDataItem(type, index) {
+            if (!confirm('Are you sure you want to delete this item?')) return;
+            
+            const masterData = JSON.parse(localStorage.getItem('masterData') || '{}');
+            if (masterData[type] && masterData[type][index] !== undefined) {
+                masterData[type].splice(index, 1);
+                localStorage.setItem('masterData', JSON.stringify(masterData));
+                loadMasterDataView();
+                alert('Item deleted successfully!');
+            }
+        }
+
+        function encodeQueryParams(params = {}) {
+            return Object.entries(params)
+                .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
+                .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+                .join('&');
+        }
+
+        function getPartQueryData(part, categoryFilter) {
+            const normalizedCategory = categoryFilter || part.category || '';
+            return {
+                partCategory: normalizedCategory,
+                partName: part.item || part.part_name || part.partName || '',
+                model: part.model || part.std || '',
+                size: part.size || '',
+                moc: part.moc || '',
+                remarks: part.remarks || '',
+                qty: part.qty || part.quantity || ''
+            };
+        }
+
+        function redirectToConfigTab(tab, extraQuery = '') {
+            const params = new URLSearchParams(extraQuery);
+            params.set('tab', tab);
+            window.location.href = `10_configuration.html?${params.toString()}`;
+        }
+
+        // Add sample data if none exists
+        function initializeSampleData() {
+            // Don't clear existing data - only add samples if data doesn't exist
+            
+            // Sample Machines Data - DISABLED to preserve user data
+            // Users should add their own machines from 10_configuration.html
+            
+            // Sample Parts Data
+            if (!localStorage.getItem('parts')) {
+                const sampleParts = [
+                    {
+                        category: 'Valve',
+                        item: 'Gate Valve',
+                        part_name: 'Gate Valve',
+                        model: 'GV-300',
+                        size: '100mm',
+                        moc: 'Carbon Steel',
+                        endConn: 'Flanged',
+                        class: '150',
+                        remarks: 'Mainline isolation',
+                        qty: '12',
+                        invoice: 'INV-VAL-101',
+                        party: 'Orbit Steel',
+                        date: '2025-12-01'
+                    },
+                    {
+                        category: 'Valve',
+                        item: 'Globe Valve',
+                        part_name: 'Globe Valve',
+                        model: 'GL-210',
+                        size: '80mm',
+                        moc: 'Stainless Steel',
+                        endConn: 'Butt Weld',
+                        class: '300',
+                        remarks: 'High precision control',
+                        qty: '8',
+                        invoice: 'INV-VAL-102',
+                        party: 'Valve Experts',
+                        date: '2025-11-25'
+                    },
+                    {
+                        category: 'Pump',
+                        item: 'Centrifugal Pump',
+                        part_name: 'Centrifugal Pump',
+                        model: 'CP-450',
+                        moc: 'Cast Iron',
+                        std: 'IS 9078',
+                        mechSeal: 'Single',
+                        accessories: 'Coupling + Baseplate',
+                        qty: '2',
+                        invoice: 'INV-PMP-201',
+                        party: 'Pump Tech',
+                        date: '2025-12-05'
+                    },
+                    {
+                        category: 'Pump',
+                        item: 'Vertical Turbine Pump',
+                        part_name: 'Vertical Turbine Pump',
+                        model: 'VT-220',
+                        moc: 'Ductile Iron',
+                        std: 'ISO 5199',
+                        mechSeal: 'Double',
+                        accessories: 'Vibration pads',
+                        qty: '1',
+                        invoice: 'INV-PMP-202',
+                        party: 'Vertical Flow',
+                        date: '2025-12-08'
+                    },
+                    {
+                        category: 'Parts',
+                        item: 'Control Panel',
+                        part_name: 'Control Panel',
+                        equipment: 'Hydraulic Station',
+                        moc: 'Mild Steel',
+                        remarks: 'Touchscreen PLC',
+                        qty: '3',
+                        invoice: 'INV-PRT-301',
+                        party: 'Orbit Controls',
+                        date: '2025-12-02'
+                    },
+                    {
+                        category: 'Parts',
+                        item: 'Pressure Sensor',
+                        part_name: 'Pressure Sensor',
+                        equipment: 'Injection Unit',
+                        moc: 'Aluminum',
+                        remarks: 'High accuracy',
+                        qty: '20',
+                        invoice: 'INV-PRT-302',
+                        party: 'Sensors Co',
+                        date: '2025-12-09'
+                    }
+                ];
+                localStorage.setItem('parts', JSON.stringify(sampleParts));
+            }
+
+            // Sample BOM Templates Data
+            if (!localStorage.getItem('boms')) {
+                const sampleBOMs = [
+                    {
+                        template_name: 'BOM-VALVE-001',
+                        product_type: 'Valve Control Block',
+                        category: 'Valve',
+                        parts_count: 4,
+                        parts: [
+                            { partName: 'Gate Valve', quantity: '2', remarks: 'Main inlet' },
+                            { partName: 'Globe Valve', quantity: '1', remarks: 'Bypass line' },
+                            { partName: 'Pressure Sensor', quantity: '2', remarks: 'Feedback' },
+                            { partName: 'Fastener Set', quantity: '1', remarks: 'Assembly' }
+                        ]
+                    },
+                    {
+                        template_name: 'BOM-PUMP-001',
+                        product_type: 'Industrial Pump',
+                        category: 'Pump',
+                        parts_count: 5,
+                        parts: [
+                            { partName: 'Centrifugal Pump', quantity: '1', remarks: 'Drive unit' },
+                            { partName: 'Control Panel', quantity: '1', remarks: 'Starter' },
+                            { partName: 'Seal Kit', quantity: '2', remarks: 'Maintenance' },
+                            { partName: 'Coupling', quantity: '1', remarks: 'Alignment' },
+                            { partName: 'Rails', quantity: '1', remarks: 'Mounting' }
+                        ]
+                    },
+                    {
+                        template_name: 'BOM-PARTS-001',
+                        product_type: 'Hydraulic Assembly',
+                        category: 'Parts',
+                        parts_count: 4,
+                        parts: [
+                            { partName: 'Control Panel', quantity: '1', remarks: 'PLC' },
+                            { partName: 'Pressure Sensor', quantity: '2', remarks: 'Loop feedback' },
+                            { partName: 'Spring', quantity: '6', remarks: 'Tension' },
+                            { partName: 'Fastener Set', quantity: '2', remarks: 'Frame' }
+                        ]
+                    }
+                ];
+                localStorage.setItem('boms', JSON.stringify(sampleBOMs));
+            }
+
+            // Sample Users Data
+            if (!localStorage.getItem('OrbitUsers')) {
+                const sampleUsers = [
+                    {
+                        id: 1,
+                        name: 'Admin User',
+                        email: 'admin@Orbit.com',
+                        password: 'admin123',
+                        role: 'Admin',
+                        permissions: {
+                            '1.1': { create: true, read: true, update: true, delete: true },
+                            '01': { create: true, read: true, update: true, delete: true },
+                            '02': { create: true, read: true, update: true, delete: true },
+                            '03': { create: true, read: true, update: true, delete: true },
+                            '04': { create: true, read: true, update: true, delete: true },
+                            '05': { create: true, read: true, update: true, delete: true },
+                            '06': { create: true, read: true, update: true, delete: true },
+                            '07': { create: true, read: true, update: true, delete: true },
+                            '08': { create: true, read: true, update: true, delete: true },
+                            '09': { create: true, read: true, update: true, delete: true },
+                            '10': { create: true, read: true, update: true, delete: true }
+                        }
+                    },
+                    {
+                        id: 2,
+                        name: 'Manager User',
+                        email: 'manager@Orbit.com',
+                        password: 'manager123',
+                        role: 'Manager',
+                        permissions: {
+                            '1.1': { create: false, read: true, update: true, delete: false },
+                            '01': { create: false, read: true, update: true, delete: false },
+                            '02': { create: true, read: true, update: true, delete: false },
+                            '03': { create: true, read: true, update: true, delete: false },
+                            '04': { create: false, read: true, update: false, delete: false },
+                            '05': { create: false, read: true, update: false, delete: false },
+                            '06': { create: true, read: true, update: true, delete: false },
+                            '07': { create: true, read: true, update: true, delete: false },
+                            '08': { create: false, read: true, update: false, delete: false },
+                            '09': { create: false, read: true, update: false, delete: false },
+                            '10': { create: false, read: true, update: false, delete: false }
+                        }
+                    },
+                    {
+                        id: 3,
+                        name: 'Operator User',
+                        email: 'operator@Orbit.com',
+                        password: 'operator123',
+                        role: 'User',
+                        permissions: {
+                            '1.1': { create: false, read: true, update: false, delete: false },
+                            '01': { create: false, read: true, update: false, delete: false },
+                            '02': { create: false, read: true, update: false, delete: false },
+                            '03': { create: false, read: true, update: false, delete: false },
+                            '04': { create: false, read: true, update: false, delete: false },
+                            '05': { create: false, read: true, update: false, delete: false },
+                            '06': { create: false, read: true, update: false, delete: false },
+                            '07': { create: false, read: true, update: false, delete: false },
+                            '08': { create: false, read: true, update: false, delete: false },
+                            '09': { create: false, read: true, update: false, delete: false },
+                            '10': { create: false, read: false, update: false, delete: false }
+                        }
+                    }
+                ];
+                localStorage.setItem('OrbitUsers', JSON.stringify(sampleUsers));
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('.tab-btn').classList.add('active', 'primary-gradient', 'text-white');
+            
+            // Initialize sample data
+            initializeSampleData();
+
+            const partsFilter = document.getElementById('partsCategoryFilter');
+            if (partsFilter) partsFilter.value = 'Valve';
+            const bomFilter = document.getElementById('bomCategoryFilter');
+            if (bomFilter) bomFilter.value = 'Valve';
+            const masterDataFilter = document.getElementById('masterDataFilter');
+            if (masterDataFilter) masterDataFilter.value = 'endConnections';
+            
+            // Load all data and update counts
+            loadMachinesData();
+            loadPartsData();
+            loadBOMData();
+            loadOrbitUsersForView();
+            loadMasterDataView();
+
+            // Ensure the filter visibility matches the active tab on load
+            const activeTabId = document.querySelector('.tab-content:not(.hidden)')?.id || 'machines';
+            const pf = document.getElementById('processFilter');
+            if (pf) {
+                if (activeTabId === 'machines') pf.classList.remove('hidden');
+                else pf.classList.add('hidden');
+            }
+            if (partsFilter) {
+                if (activeTabId === 'parts') partsFilter.classList.remove('hidden');
+                else partsFilter.classList.add('hidden');
+            }
+            if (bomFilter) {
+                if (activeTabId === 'bom') bomFilter.classList.remove('hidden');
+                else bomFilter.classList.add('hidden');
+            }
+        });
+
+        // Edit Part function - redirect to configuration page with prefilled data
+        function editPart(partIndex) {
+            const parts = JSON.parse(localStorage.getItem('parts') || '[]');
+            const part = parts[partIndex];
+            if (!part) return;
+
+            // Build query parameters for prefilling
+            const params = new URLSearchParams();
+            params.set('tab', 'parts');
+            params.set('partIndex', partIndex);
+            
+            // Add all part data to query params
+            Object.keys(part).forEach(key => {
+                if (part[key]) params.set(key, part[key]);
+            });
+
+            window.location.href = `10_configuration.html?${params.toString()}`;
+        }
+
+        // Delete Part function
+        function deletePart(partIndex) {
+            const parts = JSON.parse(localStorage.getItem('parts') || '[]');
+            const part = parts[partIndex];
+            if (!part) return;
+
+            if (confirm(`Are you sure you want to delete "${part.item || part.itemName || part.part_name || 'this part'}"?`)) {
+                parts.splice(partIndex, 1);
+                localStorage.setItem('parts', JSON.stringify(parts));
+                loadPartsData();
+                
+                // Show success message
+                alert('Part deleted successfully!');
+            }
+        }
+
+        // Edit Machine function - redirect to configuration page with prefilled data
+        function editMachine(machineIndex) {
+            const machines = JSON.parse(localStorage.getItem('machines') || '[]');
+            const machine = machines[machineIndex];
+            if (!machine) return;
+
+            // Build query parameters for prefilling
+            const params = new URLSearchParams();
+            params.set('tab', 'machines');
+            params.set('machineIndex', machineIndex);
+            
+            // Add all machine data to query params
+            Object.keys(machine).forEach(key => {
+                if (machine[key]) params.set(key, machine[key]);
+            });
+
+            window.location.href = `10_configuration.html?${params.toString()}`;
+        }
+
+        // Delete Machine function
+        function deleteMachine(machineIndex) {
+            const machines = JSON.parse(localStorage.getItem('machines') || '[]');
+            const machine = machines[machineIndex];
+            if (!machine) return;
+
+            if (confirm(`Are you sure you want to delete machine "${machine.name || 'this machine'}"?`)) {
+                machines.splice(machineIndex, 1);
+                localStorage.setItem('machines', JSON.stringify(machines));
+                loadMachinesData();
+                alert('Machine deleted successfully!');
+            }
+        }
+
+        // Edit BOM function - redirect to configuration page with prefilled data
+        function editBOM(bomIndex) {
+            const boms = JSON.parse(localStorage.getItem('boms') || '[]');
+            const bom = boms[bomIndex];
+            if (!bom) return;
+
+            // Build query parameters for prefilling
+            const params = new URLSearchParams();
+            params.set('tab', 'bom');
+            params.set('bomIndex', bomIndex);
+            
+            // Add all BOM data to query params
+            Object.keys(bom).forEach(key => {
+                if (bom[key]) params.set(key, bom[key]);
+            });
+
+            window.location.href = `10_configuration.html?${params.toString()}`;
+        }
+
+        // Delete BOM function
+        function deleteBOM(bomIndex) {
+            const boms = JSON.parse(localStorage.getItem('boms') || '[]');
+            const bom = boms[bomIndex];
+            if (!bom) return;
+
+            const bomName = bom.type === 'Valve' ? (bom.valveName || 'this BOM') : (bom.partName || 'this BOM');
+            if (confirm(`Are you sure you want to delete "${bomName}"?`)) {
+                boms.splice(bomIndex, 1);
+                localStorage.setItem('boms', JSON.stringify(boms));
+                loadBOMData();
+                alert('BOM deleted successfully!');
+            }
+        }
+    </script>
+    <script src="assets/lang.js"></script>
+</body>
+</html>
+   

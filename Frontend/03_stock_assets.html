@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock & Assets - Orbit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #022758; --primary-light: #1A3A5C; --secondary: #E8F1F8; --tertiary: #95B3CC; }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .tab-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tab-btn:hover {
+            transform: translateY(-2px);
+        }
+        .tab-btn:active {
+            transform: translateY(0);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Professional card styles */
+        .muted { color: #64748b; }
+        .card-border { border-color: rgba(15,23,42,0.06); }
+
+        /* Primary helpers */
+        .primary-gradient { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; }
+        .primary-btn { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; box-shadow: 0 8px 20px rgba(2,39,88,0.14); }
+        .primary-shadow { box-shadow: 0 12px 28px rgba(2,39,88,0.12); }
+
+        /* Ensure pro-cards using primary are visible and override other gradients */
+        .pro-card.primary-gradient { background: linear-gradient(135deg, var(--primary), var(--primary-light)) !important; color: white !important; }
+        .pro-card.primary-gradient .label, .pro-card.primary-gradient .value { color: white !important; }
+
+        .pro-card {
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 0.8rem;
+            transition: box-shadow 0.18s ease, transform 0.18s ease;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+        }
+        .pro-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(2,6,23,0.06); }
+        .pro-card .label { color: rgba(255,255,255,0.9); font-weight: 700; font-size: 12px; }
+        .pro-card .value { color: white; font-weight: 800; font-size: 1.3rem; }
+
+        /* When Stock tab is active, add primary accent to cards */
+        .stock-active .pro-card { box-shadow: 0 10px 30px rgba(30, 64, 175, 0.10); border-color: rgba(30, 64, 175, 0.10); }
+        .stock-active .pro-card .label, .stock-active .pro-card .value { color: white !important; }
+
+        /* Compact layout helpers */
+        .compact-small { padding: 0.45rem !important; }
+        .compact-tight { gap: 0.5rem !important; }
+        .compact-text-sm { font-size: 12px !important; }
+
+        /* Refined compact table styling */
+        .compact-table thead th { padding: 0.55rem 0.5rem !important; font-size: 12px; color: #0f172a; font-weight: 700; }
+        .compact-table tbody td { padding: 0.5rem 0.5rem !important; font-size: 13px; color: #334155; }
+        .compact-table tbody tr:nth-child(even) { background: #fbfdff; }
+        .compact-table tbody tr:hover { background: #f1f5f9; }
+        .compact-table { border-collapse: separate; border-spacing: 0; }
+
+        /* Mobile card compacting */
+        .compact-mobile .card { padding: 0.6rem !important; gap: 0.5rem !important; }
+        .compact-mobile .card p { font-size: 13px !important; }
+
+        /* Reduce general spacings */
+        .compact-gap-2 { gap: 0.5rem; }
+        .compact-mb { margin-bottom: 0.5rem !important; }
+        /* Stock form compact styles */
+        #stockSection .stock-form-compact { padding: 0.5rem !important; }
+        #stockSection .stock-form-compact .mb-4 { margin-bottom: 0.5rem !important; }
+        #stockSection .stock-form-compact label { font-size: 12px !important; font-weight: 700 !important; color: #334155; }
+        #stockSection .stock-form-compact input,
+        #stockSection .stock-form-compact select,
+        #stockSection .stock-form-compact textarea {
+            padding: 0.45rem !important;
+            font-size: 13px !important;
+            border-radius: 8px !important;
+        }
+        #stockSection .stock-form-compact .grid { gap: 0.5rem !important; }
+
+        /* Generic compact form utility */
+        .form-compact { padding: 0.4rem !important; }
+        .form-compact .mb-4 { margin-bottom: 0.3rem !important; }
+        .form-compact label { font-size: 11px !important; font-weight: 700 !important; color: #334155; }
+        .form-compact input,
+        .form-compact select,
+        .form-compact textarea {
+            padding: 0.35rem 0.4rem !important;
+            font-size: 12px !important;
+            border-radius: 6px !important;
+        }
+        .form-compact .grid { gap: 0.3rem !important; }
+        .form-compact .space-y-3 { gap: 0.4rem !important; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Top Navbar -->
+    <nav class="sticky top-0 z-20 text-white" style="background:var(--primary);">
+        <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <a href="07_stock_management.html" title="Back to Stock Management" class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white hover:scale-105 transition mr-1">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div class="text-lg sm:text-xl font-bold text-white">Stock & Assets</div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="01_dashboard.html" class="inline-flex items-center gap-2 px-3 py-2 bg-white text-[var(--primary)] rounded-lg font-semibold shadow hover:scale-105 transition-all hidden sm:inline-flex">
+                        <i class="fas fa-house"></i>
+                        <span>Back to Dashboard</span>
+                    </a>
+                    <!-- Mobile menu button (visible on small screens) -->
+                    <button id="mobileMenuBtn03" class="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 text-white hover:scale-105 transition">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Mobile dropdown menu (hidden by default) -->
+            <div id="mobileMenu03" class="hidden absolute right-4 top-16 mt-1 w-44 bg-white rounded-lg shadow-lg z-50 overflow-hidden">
+                <a href="07_stock_management.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Back to Stock Management</a>
+                <a href="01_dashboard.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Back to Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-2 sm:px-3 lg:px-5 py-2 sm:py-3 compact-page">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2 mb-2 sm:mb-3 compact-cards compact-gap-2 compact-mb">
+            <div class="pro-card primary-gradient text-white">
+                <div class="flex items-center gap-3 mb-2 pb-2 border-b border-white/10">
+                    <div class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
+                        <i class="fas fa-clipboard-list text-white"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="label">Total Stock</div>
+                    </div>
+                </div>
+                <div class="value">247</div>
+            </div>
+            <div class="pro-card primary-gradient text-white">
+                <div class="flex items-center gap-3 mb-2 pb-2 border-b border-white/10">
+                    <div class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
+                        <i class="fas fa-exclamation-triangle text-white"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="label">Low Stock</div>
+                    </div>
+                </div>
+                <div class="value">12</div>
+            </div>
+            <div class="pro-card primary-gradient text-white">
+                <div class="flex items-center gap-3 mb-2 pb-2 border-b border-white/10">
+                    <div class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
+                        <i class="fas fa-cubes text-white"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="label">Total Assets</div>
+                    </div>
+                </div>
+                <div class="value">89</div>
+            </div>
+            <div class="pro-card primary-gradient text-white">
+                <div class="flex items-center gap-3 mb-2 pb-2 border-b border-white/10">
+                    <div class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10">
+                        <i class="fas fa-check-circle text-white"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="label">Active Assets</div>
+                    </div>
+                </div>
+                <div class="value">76</div>
+            </div>
+        </div>
+
+
+
+        <!-- Tabs and Search -->
+        <div id="filterRow" class="flex flex-wrap items-center gap-3 mb-4 sm:mb-5">
+            <div class="flex gap-2 items-center flex-shrink-0">
+                <button id="stockBtn" class="tab-btn flex-shrink-0 px-4 py-2 primary-gradient rounded-lg text-sm font-semibold shadow-md hover:shadow-lg hover:scale-105 transition-all inline-flex items-center justify-center gap-2">
+                    Stock
+                </button>
+                <button id="assetsBtn" class="tab-btn flex-shrink-0 px-4 py-2 bg-white text-slate-700 rounded-lg text-sm font-semibold shadow-sm hover:shadow-md hover:scale-105 transition-all inline-flex items-center justify-center gap-2 border-2 border-slate-200">
+                    Pattern
+                </button>
+            </div>
+
+            <!-- Search Bar -->
+            <div id="searchBarWrapper" class="flex-1 min-w-fit">
+                <input type="text" id="searchInput03" placeholder="Search items..." class="w-full px-4 py-2.5 border-2 border-slate-200 rounded-lg text-sm bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+            </div>
+        </div>
+
+        <script>
+            /* Dropdown caret + helper style - Clean Professional Design */
+            (function(){
+                const s = document.createElement('style');
+                s.innerHTML = `
+                    .dropdown-input-wrapper { position: relative; width: auto; }
+                    #filterRow .dropdown-input-wrapper { width: auto; }
+                    .dropdown-input-wrapper::after { 
+                        content: '\\f078'; 
+                        font-family: 'Font Awesome 6 Free'; 
+                        font-weight: 900; 
+                        position: absolute; 
+                        right: 14px; 
+                        top: 50%; 
+                        transform: translateY(-50%); 
+                        color: var(--primary); 
+                        pointer-events: none; 
+                        font-size: 13px; 
+                        transition: transform 0.2s ease; 
+                    }
+                    .dropdown-input-wrapper.open::after { 
+                        transform: translateY(-50%) rotate(180deg); 
+                    }
+                    .input-field-with-dropdown { 
+                        padding-right: 36px; 
+                        overflow: hidden; 
+                        white-space: nowrap; 
+                        text-overflow: ellipsis; 
+                    }
+                    .custom-dropdown { 
+                        position: absolute; 
+                        z-index: 9999; 
+                        width: 120px; 
+                        background: white; 
+                        border: 2px solid var(--primary); 
+                        border-radius: 10px; 
+                        box-shadow: 0 10px 30px rgba(2,39,88,0.15); 
+                        margin-top: 8px; 
+                        max-height: 180px; 
+                        overflow-y: auto;
+                    }
+                    .custom-dropdown::-webkit-scrollbar {
+                        width: 6px;
+                    }
+                    .custom-dropdown::-webkit-scrollbar-track {
+                        background: transparent;
+                    }
+                    .custom-dropdown::-webkit-scrollbar-thumb {
+                        background: var(--primary);
+                        border-radius: 3px;
+                    }
+                    .custom-dropdown-option { 
+                        padding: 12px 14px; 
+                        cursor: pointer; 
+                        font-size: 14px; 
+                        font-weight: 500;
+                        color: #334155; 
+                        border-bottom: 1px solid #e8eef5; 
+                        transition: all 0.2s ease; 
+                        display: flex; 
+                        align-items: center; 
+                        gap: 8px;
+                    }
+                    .custom-dropdown-option:last-child { 
+                        border-bottom: none; 
+                    }
+                    .custom-dropdown-option:hover { 
+                        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+                        color: white; 
+                    }
+                `;
+                document.head.appendChild(s);
+            })();
+
+            function showCategoryDropdown03(input) {
+                console.log('showCategoryDropdown03 called', input);
+                const existing = document.querySelector('.custom-dropdown');
+                if (existing && existing._attachedTo === input) {
+                    existing.remove();
+                    input.parentElement.classList.remove('open');
+                    return;
+                }
+                if (existing) existing.remove();
+
+                const options = [ { value: 'valve', label: 'Valve' }, { value: 'pump', label: 'Pump' }, { value: 'parts', label: 'Parts' } ];
+                const dropdown = document.createElement('div');
+                dropdown.className = 'custom-dropdown';
+
+                // fixed positioning and strong z-index to avoid clipping
+                dropdown.style.position = 'fixed';
+                dropdown.style.zIndex = '2147483647';
+
+                const rect = input.getBoundingClientRect();
+                const margin = 8;
+                // set width exactly to input width and clamp to viewport if necessary
+                // slightly narrower than input so it ends where the input ends visually
+                let ddW = Math.max(80, Math.round(rect.width - 12));
+                if (rect.left + ddW > window.innerWidth - margin) {
+                    ddW = Math.max(80, window.innerWidth - margin - rect.left);
+                }
+                dropdown.style.width = ddW + 'px';
+                dropdown.style.boxSizing = 'border-box';
+                dropdown._attachedTo = input;
+
+                options.forEach(opt => {
+                    const el = document.createElement('div');
+                    el.className = 'custom-dropdown-option';
+                    el.textContent = opt.label;
+                    el.onclick = () => {
+                        input.value = opt.label;
+                        input.setAttribute('data-value', opt.value);
+                        // sync hidden select for form behavior
+                        const categorySelect = document.getElementById('categorySelect');
+                        if (categorySelect) categorySelect.value = opt.value;
+                        if (typeof filterStockByType === 'function') filterStockByType(opt.value);
+                        dropdown.remove();
+                        input.parentElement.classList.remove('open');
+                    };
+                    dropdown.appendChild(el);
+                });
+
+                document.body.appendChild(dropdown);
+                input.parentElement.classList.add('open');
+
+                // align left edge under input and clamp height to available space below
+                const currentWidth = dropdown.offsetWidth || ddW;
+                let left = rect.left - 8;
+                if (left < margin) left = margin;
+                if (left + currentWidth > window.innerWidth - margin) left = window.innerWidth - currentWidth - margin;
+                const availableBelow = window.innerHeight - rect.bottom - margin;
+                const maxH = Math.max(48, Math.min(140, availableBelow - 8));
+                dropdown.style.left = left + 'px';
+                dropdown.style.top = (rect.bottom + 4) + 'px';
+                dropdown.style.maxHeight = maxH + 'px';
+                dropdown.style.overflowY = 'auto';
+
+                // Close on outside click
+                setTimeout(() => {
+                    document.addEventListener('click', function close(e){
+                        if (!dropdown.contains(e.target) && e.target !== input) {
+                            dropdown.remove();
+                            input.parentElement.classList.remove('open');
+                            document.removeEventListener('click', close);
+                        }
+                    });
+                }, 50);
+
+                // Reposition on resize/scroll
+                function reposition() {
+                    const r = input.getBoundingClientRect();
+                        // recompute width to match input width but clamp to viewport
+                    let w = Math.round(r.width);
+                    if (r.left + w > window.innerWidth - margin) w = Math.max(80, window.innerWidth - margin - r.left);
+                    dropdown.style.width = w + 'px';
+                    let l = r.left;
+                    if (l < margin) l = margin;
+                    if (l + w > window.innerWidth - margin) l = window.innerWidth - w - margin;
+                    dropdown.style.left = l + 'px';
+                    const available = window.innerHeight - r.bottom - margin;
+                    const newH = Math.max(48, Math.min(140, available - 8));
+                    dropdown.style.maxHeight = newH + 'px';
+                    dropdown.style.top = (r.bottom + 4) + 'px';
+                }
+                window.addEventListener('resize', reposition);
+                window.addEventListener('scroll', reposition, true);
+
+                const observer = new MutationObserver(function(){
+                    if (!document.body.contains(dropdown)) {
+                        window.removeEventListener('resize', reposition);
+                        window.removeEventListener('scroll', reposition, true);
+                        observer.disconnect();
+                    }
+                });
+                observer.observe(document.body, { childList: true });
+            }
+
+            // Generic select-backed dropdown (re-uses same styling/positioning)
+            function showSelectDropdownFor(input, selectId) {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+                const opts = Array.from(select.options).map(o => ({ value: o.value, label: o.textContent })).filter(o => o.value);
+                const dropdown = document.createElement('div');
+                dropdown.className = 'custom-dropdown';
+                dropdown.style.position = 'fixed';
+                dropdown.style.zIndex = '2147483647';
+
+                const rect = input.getBoundingClientRect();
+                const margin = 8;
+                let ddW = Math.round(rect.width - 12);
+                if (rect.left + ddW > window.innerWidth - margin) ddW = Math.max(80, window.innerWidth - margin - rect.left);
+                dropdown.style.width = ddW + 'px';
+
+                opts.forEach(opt => {
+                    const el = document.createElement('div');
+                    el.className = 'custom-dropdown-option';
+                    el.textContent = opt.label;
+                    el.onclick = () => {
+                        input.value = opt.label;
+                        if (select) select.value = opt.value;
+                        input.setAttribute('data-value', opt.value);
+                        dropdown.remove();
+                        input.parentElement.classList.remove('open');
+                    };
+                    dropdown.appendChild(el);
+                });
+
+                document.body.appendChild(dropdown);
+                input.parentElement.classList.add('open');
+
+                // position
+                let left = rect.left;
+                if (left < margin) left = margin;
+                if (left + ddW > window.innerWidth - margin) left = window.innerWidth - ddW - margin;
+                dropdown.style.left = left + 'px';
+                const availableBelow = window.innerHeight - rect.bottom - margin;
+                dropdown.style.top = (rect.bottom + 4) + 'px';
+                dropdown.style.maxHeight = Math.max(48, Math.min(140, availableBelow - 8)) + 'px';
+                dropdown.style.overflowY = 'auto';
+
+                setTimeout(() => {
+                    document.addEventListener('click', function close(e){
+                        if (!dropdown.contains(e.target) && e.target !== input) {
+                            dropdown.remove();
+                            input.parentElement.classList.remove('open');
+                            document.removeEventListener('click', close);
+                        }
+                    });
+                }, 50);
+
+                function reposition() {
+                    const r = input.getBoundingClientRect();
+                    let w = Math.round(r.width - 12);
+                    if (r.left + w > window.innerWidth - margin) w = Math.max(80, window.innerWidth - margin - r.left);
+                    dropdown.style.width = w + 'px';
+                    let l = r.left;
+                    if (l < margin) l = margin;
+                    if (l + w > window.innerWidth - margin) l = window.innerWidth - w - margin;
+                    dropdown.style.left = l + 'px';
+                    const available = window.innerHeight - r.bottom - margin;
+                    dropdown.style.maxHeight = Math.max(48, Math.min(140, available - 8)) + 'px';
+                    dropdown.style.top = (r.bottom + 4) + 'px';
+                }
+                window.addEventListener('resize', reposition);
+                window.addEventListener('scroll', reposition, true);
+                const observer2 = new MutationObserver(function(){ if (!document.body.contains(dropdown)) { window.removeEventListener('resize', reposition); window.removeEventListener('scroll', reposition, true); observer2.disconnect(); }});
+                observer2.observe(document.body, { childList: true });
+            }
+
+            // --- Size suggestions (Stock) and Asset search/autocomplete ---
+            const sizesByCategory = {
+                valve: ['1/4"','1/2"','3/4"','1"','1.5"','2"','2.5"','3"','4"','6"','8"','10"','12"','DN15','DN20','DN25','DN40','DN50'],
+                pump: ['DN25','DN32','DN40','DN50','DN65','DN80','DN100','DN125','150','200','1"','1.5"','2"'],
+                parts: ['Small','Medium','Large','M6','M8','M10','M12','Custom']
+            };
+
+            function showSizeDropdown03(input) {
+                // If dropdown already attached to this input, toggle close
+                const existing = document.querySelector('.custom-dropdown');
+                if (existing && existing._attachedTo === input) { existing.remove(); input.parentElement.classList.remove('open'); return; }
+                if (existing) existing.remove();
+
+                const cat = (document.getElementById('categorySelect') && document.getElementById('categorySelect').value) || (document.getElementById('categoryFilter03') && document.getElementById('categoryFilter03').getAttribute('data-value')) || 'valve';
+                const list = sizesByCategory[cat] || [];
+                const dropdown = document.createElement('div');
+                dropdown.className = 'custom-dropdown';
+                dropdown.style.position = 'fixed';
+                dropdown.style.zIndex = '2147483647';
+                dropdown._attachedTo = input;
+
+                function render(items) {
+                    dropdown.innerHTML = '';
+                    if (!items.length) {
+                        const none = document.createElement('div'); none.className='custom-dropdown-option'; none.textContent='No matches'; none.style.opacity='0.6'; dropdown.appendChild(none); return;
+                    }
+                    items.forEach(opt => {
+                        const el = document.createElement('div'); el.className = 'custom-dropdown-option'; el.textContent = opt;
+                        el.onclick = () => { input.value = opt; dropdown.remove(); input.parentElement.classList.remove('open'); };
+                        dropdown.appendChild(el);
+                    });
+                }
+
+                render(list);
+                document.body.appendChild(dropdown);
+                input.parentElement.classList.add('open');
+
+                // position & size
+                const rect = input.getBoundingClientRect(); const margin=8;
+                let ddW = Math.round(rect.width);
+                if (rect.left + ddW > window.innerWidth - margin) ddW = Math.max(80, window.innerWidth - margin - rect.left);
+                dropdown.style.width = ddW + 'px';
+                let left = rect.left; if (left < margin) left = margin; if (left + ddW > window.innerWidth - margin) left = window.innerWidth - ddW - margin;
+                dropdown.style.left = left + 'px';
+                const availableBelow = window.innerHeight - rect.bottom - margin;
+                dropdown.style.top = (rect.bottom + 4) + 'px';
+                dropdown.style.maxHeight = Math.max(48, Math.min(180, availableBelow - 8)) + 'px';
+                dropdown.style.overflowY = 'auto';
+
+                // close on outside click
+                setTimeout(()=>{ document.addEventListener('click', function close(e){ if (!dropdown.contains(e.target) && e.target !== input) { dropdown.remove(); input.parentElement.classList.remove('open'); document.removeEventListener('click', close); } }); },50);
+
+                // store reference for filter handler
+                input._sizeDropdown = { element: dropdown, source: list };
+
+                function reposition() {
+                    const r = input.getBoundingClientRect();
+                    let w = Math.round(r.width);
+                    if (r.left + w > window.innerWidth - margin) w = Math.max(80, window.innerWidth - margin - r.left);
+                    dropdown.style.width = w + 'px';
+                    let l = r.left; if (l < margin) l = margin; if (l + w > window.innerWidth - margin) l = window.innerWidth - w - margin; dropdown.style.left = l + 'px';
+                    const available = window.innerHeight - r.bottom - margin; dropdown.style.maxHeight = Math.max(48, Math.min(180, available - 8)) + 'px'; dropdown.style.top = (r.bottom + 4) + 'px';
+                }
+                window.addEventListener('resize', reposition); window.addEventListener('scroll', reposition, true);
+                const obs = new MutationObserver(()=>{ if (!document.body.contains(dropdown)) { window.removeEventListener('resize', reposition); window.removeEventListener('scroll', reposition, true); obs.disconnect(); } }); obs.observe(document.body, { childList: true });
+            }
+
+            function filterSizeDropdown(input) {
+                const dd = input._sizeDropdown && input._sizeDropdown.element;
+                const source = input._sizeDropdown && input._sizeDropdown.source;
+                if (!dd || !source) return;
+                const term = (input.value||'').toLowerCase().trim();
+                const filtered = source.filter(s => s.toLowerCase().indexOf(term) !== -1);
+                dd.innerHTML = '';
+                if (!filtered.length) { const none = document.createElement('div'); none.className='custom-dropdown-option'; none.textContent='No matches'; none.style.opacity='0.6'; dd.appendChild(none); return; }
+                filtered.forEach(opt=>{ const el = document.createElement('div'); el.className='custom-dropdown-option'; el.textContent = opt; el.onclick = ()=>{ input.value = opt; dd.remove(); input.parentElement.classList.remove('open'); }; dd.appendChild(el); });
+            }
+
+            // --- Asset search suggestions (reads OrbitAssets from localStorage) ---
+            function showAssetSearchSuggestions(input) {
+                const term = (input.value||'').toLowerCase().trim();
+                const key = 'OrbitAssets';
+                let arr = [];
+                try { arr = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e){ arr = []; }
+                const matches = arr.filter(a=>{
+                    return (a.itemName||'').toLowerCase().includes(term) || (a.size||'').toLowerCase().includes(term) || (a.serialNo||'').toLowerCase().includes(term);
+                }).slice(0,8);
+
+                // remove existing suggestions
+                const existing = document.querySelector('.custom-dropdown'); if (existing && existing._attachedTo === input) existing.remove();
+
+                const dropdown = document.createElement('div'); dropdown.className='custom-dropdown'; dropdown.style.position='fixed'; dropdown.style.zIndex='2147483647'; dropdown._attachedTo = input;
+                if (!matches.length) { const none = document.createElement('div'); none.className='custom-dropdown-option'; none.textContent='No matches'; none.style.opacity='0.6'; dropdown.appendChild(none);} else {
+                    matches.forEach(item=>{
+                        const el = document.createElement('div'); el.className='custom-dropdown-option'; el.innerHTML = `<strong>${(item.itemName||'Untitled')}</strong> <span style='opacity:0.7; margin-left:8px;'>${item.size||''} ${item.serialNo?('— '+item.serialNo):''}</span>`;
+                        el.onclick = ()=>{
+                            // populate the asset form fields
+                            document.getElementById('asset_type').value = item.category || '';
+                            document.getElementById('asset_itemName').value = item.itemName || '';
+                            document.getElementById('asset_serialNo').value = item.serialNo || '';
+                            document.getElementById('asset_moc').value = item.moc || '';
+                            document.getElementById('asset_size').value = item.size || '';
+                            document.getElementById('asset_buyFrom').value = item.buyFrom || '';
+                            document.getElementById('asset_buyLocation').value = item.buyLocation || '';
+                            document.getElementById('asset_remarks').value = item.remarks || '';
+                            document.getElementById('asset_qty').value = item.qty || '';
+                            document.getElementById('asset_status').value = (item.status||'').toLowerCase();
+
+                            // store edit artifact so user can edit/save via existing flow
+                            try { localStorage.setItem('editAssetItem', JSON.stringify({ category: item.category, item: item })); } catch(e){}
+
+                            // remove dropdown and clear search
+                            dropdown.remove(); input.parentElement.classList.remove('open'); input.value = '';
+                            // ensure Assets tab visible
+                            const assetsBtn = document.getElementById('assetsBtn'); if (assetsBtn) assetsBtn.click();
+                            // show delete button hookup (existing code reads editAssetItem on load, but we already set it)
+                            alert('Asset loaded into form for editing. Click Save to persist changes.');
+                        };
+                        dropdown.appendChild(el);
+                    });
+                }
+
+                document.body.appendChild(dropdown); input.parentElement.classList.add('open');
+                const rect = input.getBoundingClientRect(); const margin=8; let ddW = Math.round(rect.width);
+                if (rect.left + ddW > window.innerWidth - margin) ddW = Math.max(120, window.innerWidth - margin - rect.left);
+                dropdown.style.width = ddW + 'px'; let left = rect.left; if (left < margin) left = margin; if (left + ddW > window.innerWidth - margin) left = window.innerWidth - ddW - margin;
+                dropdown.style.left = left + 'px'; const availableBelow = window.innerHeight - rect.bottom - margin; dropdown.style.top = (rect.bottom + 4) + 'px'; dropdown.style.maxHeight = Math.max(48, Math.min(220, availableBelow - 8)) + 'px'; dropdown.style.overflowY='auto';
+
+                setTimeout(()=>{ document.addEventListener('click', function close(e){ if (!dropdown.contains(e.target) && e.target !== input) { dropdown.remove(); input.parentElement.classList.remove('open'); document.removeEventListener('click', close); } }); },50);
+            }
+
+            // Attach size suggestions to asset_size input as well (reuse showSizeDropdown03 but with assets list)
+            const assetSizeList = ['S','M','L','XL','XXL','DN15','DN20','DN25','DN40','DN50','DN65','DN80','DN100','Custom'];
+            const assetSizeInput = document.getElementById('asset_size');
+            if (assetSizeInput) {
+                assetSizeInput.setAttribute('autocomplete','off');
+                assetSizeInput.addEventListener('focus', function(){
+                    // create a dropdown like size but using assetSizeList
+                    const input = this; const existing = document.querySelector('.custom-dropdown'); if (existing && existing._attachedTo === input) { existing.remove(); input.parentElement.classList.remove('open'); return; } if (existing) existing.remove();
+                    const dropdown = document.createElement('div'); dropdown.className='custom-dropdown'; dropdown.style.position='fixed'; dropdown.style.zIndex='2147483647'; dropdown._attachedTo = input;
+                    function render(items){ dropdown.innerHTML=''; items.forEach(opt=>{ const el=document.createElement('div'); el.className='custom-dropdown-option'; el.textContent=opt; el.onclick = ()=>{ input.value = opt; dropdown.remove(); input.parentElement.classList.remove('open'); }; dropdown.appendChild(el); }); }
+                    render(assetSizeList);
+                    document.body.appendChild(dropdown); input.parentElement.classList.add('open');
+                    const rect = input.getBoundingClientRect(); const margin=8; let ddW = Math.round(rect.width); if (rect.left + ddW > window.innerWidth - margin) ddW = Math.max(120, window.innerWidth - margin - rect.left); dropdown.style.width = ddW + 'px'; let left = rect.left; if (left < margin) left = margin; if (left + ddW > window.innerWidth - margin) left = window.innerWidth - ddW - margin; dropdown.style.left = left + 'px'; const availableBelow = window.innerHeight - rect.bottom - margin; dropdown.style.top = (rect.bottom + 4) + 'px'; dropdown.style.maxHeight = Math.max(48, Math.min(220, availableBelow - 8)) + 'px'; dropdown.style.overflowY='auto';
+                    setTimeout(()=>{ document.addEventListener('click', function close(e){ if (!dropdown.contains(e.target) && e.target !== input) { dropdown.remove(); input.parentElement.classList.remove('open'); document.removeEventListener('click', close); } }); },50);
+                    input.addEventListener('input', function(){ const term=(this.value||'').toLowerCase().trim(); const filtered = assetSizeList.filter(s=>s.toLowerCase().indexOf(term)!==-1); dropdown.innerHTML=''; if(!filtered.length){ const none=document.createElement('div'); none.className='custom-dropdown-option'; none.textContent='No matches'; none.style.opacity='0.6'; dropdown.appendChild(none); return; } filtered.forEach(opt=>{ const el=document.createElement('div'); el.className='custom-dropdown-option'; el.textContent=opt; el.onclick=()=>{ input.value = opt; dropdown.remove(); input.parentElement.classList.remove('open'); }; dropdown.appendChild(el); }); });
+                });
+            }
+
+            function showAssetTypeDropdown(input) { showSelectDropdownFor(input, 'asset_type'); }
+            function showAssetStatusDropdown(input) { showSelectDropdownFor(input, 'asset_status'); }
+            function showStockItemNameDropdown(input) { showSelectDropdownFor(input, 'stock_itemName_select'); }
+            function showStockSizeDropdown(input) { showSelectDropdownFor(input, 'stock_size_select'); }
+            function showStockMOCDropdown(input) { showSelectDropdownFor(input, 'stock_moc_select'); }
+            function showStockClassDropdown(input) { showSelectDropdownFor(input, 'stock_class_select'); }
+            function showStockSourcePartyDropdown(input) { showSelectDropdownFor(input, 'stock_sourceParty_select'); }
+            function showStockLocationDropdown(input) { showSelectDropdownFor(input, 'stock_presentLocation_select'); }
+
+            // Initialize asset input displays from selects
+            document.addEventListener('DOMContentLoaded', function(){
+                const aType = document.getElementById('asset_type');
+                const aTypeIn = document.getElementById('assetTypeInput');
+                if (aType && aTypeIn) aTypeIn.value = (aType.options[aType.selectedIndex] && aType.options[aType.selectedIndex].text) || '';
+                const aStatus = document.getElementById('asset_status');
+                const aStatusIn = document.getElementById('assetStatusInput');
+                if (aStatus && aStatusIn) aStatusIn.value = (aStatus.options[aStatus.selectedIndex] && aStatus.options[aStatus.selectedIndex].text) || '';
+                // Initialize stock dropdown displays
+                const stockDropdowns = [
+                    {select: 'stock_itemName_select', input: 'stock_itemNameInput'},
+                    {select: 'stock_size_select', input: 'stock_sizeInput'},
+                    {select: 'stock_moc_select', input: 'stock_mocInput'},
+                    {select: 'stock_class_select', input: 'stock_classInput'},
+                    {select: 'stock_sourceParty_select', input: 'stock_sourcePartyInput'},
+                    {select: 'stock_presentLocation_select', input: 'stock_presentLocationInput'}
+                ];
+                stockDropdowns.forEach(d => {
+                    const sel = document.getElementById(d.select);
+                    const inp = document.getElementById(d.input);
+                    if (sel && inp) inp.value = (sel.options[sel.selectedIndex] && sel.options[sel.selectedIndex].text) || '';
+                });
+            });
+
+        </script>
+
+        <!-- Add / Manage Items -->
+        <!-- Stock Section -->
+        <div id="stockSection" class="section-content animate-fadeIn">
+            <form id="stockForm">
+                <div class="bg-gradient-to-br from-white to-blue-50 rounded-lg sm:rounded-xl shadow-lg p-3 border border-blue-200 hover:shadow-xl transition-all duration-300">
+                    <div class="bg-white p-4 rounded-xl border-2 border-slate-200">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Item Name <span class='text-red-500'>*</span></label>
+                                <input id="stock_itemNameInput" type="text" readonly class="input-field input-field-with-dropdown w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Select Item" onclick="showStockItemNameDropdown(this)" style="cursor:pointer;">
+                                <select id="stock_itemName_select" required class="hidden" aria-hidden="true">
+                                    <option value="">Select Item</option>
+                                    <option value="butterfly_valve">Butterfly Valve</option>
+                                    <option value="dual_plate_check_valve">Dual Plate Check Valve</option>
+                                    <option value="air_valve">Air Valve</option>
+                                    <option value="sluice_valve">Sluice Valve</option>
+                                    <option value="non_return_valve">Non Return Valve</option>
+                                    <option value="flow_control_valve">Flow Control Valve</option>
+                                    <option value="pressure_reducing_valve">Pressure Reducing Valve</option>
+                                    <option value="altitude_control_valve">Altitude Control Valve</option>
+                                    <option value="on_off_valve">On/Off Valve</option>
+                                </select>
+                                <input id="stock_itemName" type="hidden">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Model No</label>
+                                <input id="stock_modelNo" type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Model number">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">MRN No. <span class='text-red-500'>*</span></label>
+                                <input id="stock_mrnNo" type="text" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="MRN number">
+                            </div>
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Size <span class='text-red-500'>*</span></label>
+                                <input id="stock_sizeInput" type="text" readonly class="input-field input-field-with-dropdown w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Select Size" onclick="showStockSizeDropdown(this)" style="cursor:pointer;">
+                                <select id="stock_size_select" required class="hidden" aria-hidden="true">
+                                    <option value="">Select Size</option>
+                                    <option value="dn15">DN15</option>
+                                    <option value="dn20">DN20</option>
+                                    <option value="dn25">DN25</option>
+                                    <option value="dn40">DN40</option>
+                                    <option value="dn50">DN50</option>
+                                    <option value="dn65">DN65</option>
+                                    <option value="dn80">DN80</option>
+                                    <option value="dn100">DN100</option>
+                                    <option value="dn150">DN150</option>
+                                    <option value="dn200">DN200</option>
+                                    <option value="dn250">DN250</option>
+                                    <option value="dn300">DN300</option>
+                                </select>
+                                <input id="stock_size" type="hidden">
+                            </div>
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">MOC <span class='text-red-500'>*</span></label>
+                                <input id="stock_mocInput" type="text" readonly class="input-field input-field-with-dropdown w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Select MOC" onclick="showStockMOCDropdown(this)" style="cursor:pointer;">
+                                <select id="stock_moc_select" required class="hidden" aria-hidden="true">
+                                    <option value="">Select MOC</option>
+                                    <option value="cast_iron">Cast Iron</option>
+                                    <option value="ductile_iron">Ductile Iron</option>
+                                    <option value="stainless_steel">Stainless Steel</option>
+                                    <option value="carbon_steel">Carbon Steel</option>
+                                    <option value="bronze">Bronze</option>
+                                    <option value="brass">Brass</option>
+                                    <option value="pvc">PVC</option>
+                                    <option value="upvc">UPVC</option>
+                                </select>
+                                <input id="stock_moc" type="hidden">
+                            </div>
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Class <span class='text-red-500'>*</span></label>
+                                <input id="stock_classInput" type="text" readonly class="input-field input-field-with-dropdown w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Select Class" onclick="showStockClassDropdown(this)" style="cursor:pointer;">
+                                <select id="stock_class_select" required class="hidden" aria-hidden="true">
+                                    <option value="">Select Class</option>
+                                    <option value="pn10">PN10</option>
+                                    <option value="pn16">PN16</option>
+                                    <option value="pn25">PN25</option>
+                                    <option value="pn40">PN40</option>
+                                    <option value="150">150#</option>
+                                    <option value="300">300#</option>
+                                    <option value="600">600#</option>
+                                </select>
+                                <input id="stock_class" type="hidden">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Qty <span class='text-red-500'>*</span></label>
+                                <input id="stock_qty" type="number" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Invoice Number <span class='text-red-500'>*</span></label>
+                                <input id="stock_invoiceNo" type="text" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Invoice number">
+                            </div>
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Source Party <span class='text-red-500'>*</span></label>
+                                <input id="stock_sourcePartyInput" type="text" readonly class="input-field input-field-with-dropdown w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Select Source Party" onclick="showStockSourcePartyDropdown(this)" style="cursor:pointer;">
+                                <select id="stock_sourceParty_select" required class="hidden" aria-hidden="true">
+                                    <option value="">Select Source Party</option>
+                                    <option value="vendor_a">Vendor A</option>
+                                    <option value="vendor_b">Vendor B</option>
+                                    <option value="vendor_c">Vendor C</option>
+                                    <option value="manufacturer">Manufacturer</option>
+                                    <option value="distributor">Distributor</option>
+                                </select>
+                                <input id="stock_sourceParty" type="hidden">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Date <span class='text-red-500'>*</span></label>
+                                <input id="stock_date" type="date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                            </div>
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Present Location <span class='text-red-500'>*</span></label>
+                                <input id="stock_presentLocationInput" type="text" readonly class="input-field input-field-with-dropdown w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Select Location" onclick="showStockLocationDropdown(this)" style="cursor:pointer;">
+                                <select id="stock_presentLocation_select" required class="hidden" aria-hidden="true">
+                                    <option value="">Select Location</option>
+                                    <option value="warehouse_a">Warehouse A</option>
+                                    <option value="warehouse_b">Warehouse B</option>
+                                    <option value="factory">Factory</option>
+                                    <option value="store_room">Store Room</option>
+                                    <option value="site">Site</option>
+                                </select>
+                                <input id="stock_presentLocation" type="hidden">
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Remarks</label>
+                                <textarea id="stock_remarks" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Additional notes"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex items-center justify-between gap-3 pt-3 border-t border-blue-200 mt-3">
+                        <button id="deleteStockBtn" type="button" class="px-3 py-1.5 bg-red-50 border border-red-300 text-red-600 rounded-lg text-xs font-semibold hover:bg-red-100 transition-all">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <div class="flex gap-2 ml-auto">
+                            <button type="reset" class="px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-all">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-4 py-1.5 primary-btn rounded-lg text-xs font-semibold shadow-sm hover:shadow-md transition-all">
+                                <i class="fas fa-save mr-1"></i> Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Stock Table -->
+            <div class="bg-white rounded-lg sm:rounded-xl shadow-lg border border-slate-200 overflow-hidden mt-4">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="gradient-header">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Item Name</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Model No</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">MRN No</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Size</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">MOC</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Class</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Remarks</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Qty</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Invoice</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Party</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Date</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Present Location</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockTableBody">
+                            <tr><td colspan="13" class="px-3 py-4 text-center text-slate-500">No stock items found</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assets Section -->
+        <div id="assetsSection" class="section-content hidden">
+            <form id="assetsForm">
+                <div class="bg-gradient-to-br from-white to-purple-50 rounded-lg sm:rounded-xl shadow-lg p-2 border border-purple-200 form-compact">
+                    <!-- Header -->
+                    <!-- asset header removed for compact view -->
+                    
+                    <div class="bg-white p-4 rounded-xl border-2 border-purple-200">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Asset Type <span class='text-red-500'>*</span></label>
+                                <div class="dropdown-input-wrapper">
+                                    <input id="assetTypeInput" type="text" readonly class="input-field input-field-with-dropdown w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" value="" placeholder="Select Type" onclick="showAssetTypeDropdown(this)" style="cursor:pointer;">
+                                    <select id="asset_type" required class="hidden" aria-hidden="true"><option value="">Select Type</option><option value="machinery">Machinery</option><option value="tools">Tools</option><option value="others">Others</option></select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Item / Equipment Name <span class='text-red-500'>*</span></label>
+                                <input id="asset_itemName" type="text" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Enter equipment name">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Sr No <span class='text-red-500'>*</span></label>
+                                <input id="asset_serialNo" type="text" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Serial number">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">MOC <span class='text-red-500'>*</span></label>
+                                <input id="asset_moc" type="text" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Material of Construction">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Size <span class='text-red-500'>*</span></label>
+                                <input id="asset_size" type="text" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Enter size">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Remarks</label>
+                                <input id="asset_remarks" type="text" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Additional notes">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Qty <span class='text-red-500'>*</span></label>
+                                <input id="asset_qty" type="number" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Status <span class='text-red-500'>*</span></label>
+                                <div class="dropdown-input-wrapper">
+                                    <input id="assetStatusInput" type="text" readonly class="input-field input-field-with-dropdown w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" value="" placeholder="Select Status" onclick="showAssetStatusDropdown(this)" style="cursor:pointer;">
+                                    <select id="asset_status" required class="hidden" aria-hidden="true"><option value="">Select Status</option><option value="operational">Operational</option><option value="maintenance">Under Maintenance</option><option value="expired">Expired</option></select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between gap-3 pt-3 border-t border-purple-200 mt-3">
+                        <button id="deleteAssetBtn" type="button" class="px-3 py-1.5 bg-red-50 border border-red-300 text-red-600 rounded-lg text-xs font-semibold hover:bg-red-100 transition-all">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <div class="flex gap-2 ml-auto">
+                            <button type="reset" class="px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-all">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-4 py-1.5 primary-btn rounded-lg text-xs font-semibold shadow-sm hover:shadow-md transition-all">
+                                <i class="fas fa-save mr-1"></i> Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Pattern/Assets Table -->
+            <div class="bg-white rounded-lg sm:rounded-xl shadow-lg border border-slate-200 overflow-hidden mt-4">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="gradient-header">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Type</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Item Name</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Serial No</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">MOC</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Size</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Remarks</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Qty</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Status</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-white">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assetsTableBody">
+                            <tr><td colspan="9" class="px-3 py-4 text-center text-slate-500">No pattern items found</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Tab switching
+        const stockBtn = document.getElementById('stockBtn');
+        const assetsBtn = document.getElementById('assetsBtn');
+        const stockSection = document.getElementById('stockSection');
+        const assetsSection = document.getElementById('assetsSection');
+        const filterDropdownWrapper = document.getElementById('filterDropdownWrapper');
+
+        stockBtn.addEventListener('click', () => {
+            // clear explicit assets-open flag when switching to Stock
+            try { sessionStorage.removeItem('openAssetEdit'); } catch(e){}
+            stockBtn.classList.remove('bg-white', 'text-slate-700', 'border-2', 'border-slate-200', 'shadow-md');
+            stockBtn.classList.add('primary-gradient', 'text-white', 'shadow-lg');
+            assetsBtn.classList.add('bg-white', 'text-slate-700', 'border-2', 'border-slate-200', 'shadow-md');
+            assetsBtn.classList.remove('primary-gradient', 'text-white', 'shadow-lg');
+            stockSection.classList.remove('hidden');
+            assetsSection.classList.add('hidden');
+            if (filterDropdownWrapper) filterDropdownWrapper.classList.remove('hidden');
+            // close any open dropdowns
+            document.querySelectorAll('.custom-dropdown').forEach(d => d.remove());
+            document.querySelectorAll('.dropdown-input-wrapper').forEach(w => w.classList.remove('open'));
+            document.body.classList.add('stock-active');
+        });
+
+        assetsBtn.addEventListener('click', () => {
+            // mark that user explicitly opened Pattern in this session
+            try { sessionStorage.setItem('openAssetEdit','1'); } catch(e){}
+            assetsBtn.classList.remove('bg-white', 'text-slate-700', 'border-2', 'border-slate-200', 'shadow-md');
+            assetsBtn.classList.add('primary-gradient', 'text-white', 'shadow-lg');
+            stockBtn.classList.add('bg-white', 'text-slate-700', 'border-2', 'border-slate-200', 'shadow-md');
+            stockBtn.classList.remove('primary-gradient', 'text-white', 'shadow-lg');
+            assetsSection.classList.remove('hidden');
+            stockSection.classList.add('hidden');
+            // close any open dropdowns
+            document.querySelectorAll('.custom-dropdown').forEach(d => d.remove());
+            document.querySelectorAll('.dropdown-input-wrapper').forEach(w => w.classList.remove('open'));
+            document.body.classList.remove('stock-active');
+        });
+
+        // Form submissions (add / edit)
+        document.getElementById('stockForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const edit = JSON.parse(localStorage.getItem('editStockItem') || 'null');
+            if (edit) {
+                // collect updated values
+                const updated = Object.assign({}, edit.item);
+                updated.itemName = document.getElementById('stock_itemNameInput').value;
+                updated.modelNo = document.getElementById('stock_modelNo').value;
+                updated.mrnNo = document.getElementById('stock_mrnNo').value;
+                updated.size = document.getElementById('stock_sizeInput').value;
+                updated.moc = document.getElementById('stock_mocInput').value;
+                updated.class = document.getElementById('stock_classInput').value;
+                updated.remarks = document.getElementById('stock_remarks').value;
+                updated.qty = document.getElementById('stock_qty').value;
+                updated.invoiceNo = document.getElementById('stock_invoiceNo').value;
+                updated.sourceParty = document.getElementById('stock_sourcePartyInput').value;
+                updated.date = document.getElementById('stock_date').value;
+                updated.presentLocation = document.getElementById('stock_presentLocationInput').value;
+
+                // persist updated item into OrbitStock
+                try {
+                    const key = 'OrbitStock';
+                    const raw = localStorage.getItem(key);
+                    const arr = raw ? JSON.parse(raw) : [];
+                    // find by uid if present
+                    let found = -1;
+                    if (updated.uid) found = arr.findIndex(i => i.uid === updated.uid);
+                    // fallback: try to match by unique combination (category + type/modelNo/ itemName + date)
+                    if (found === -1) {
+                        found = arr.findIndex(i => i.category === edit.category && ((i.type && i.type === updated.type) || (i.modelNo && i.modelNo === updated.modelNo) || (i.itemName && i.itemName === updated.itemName)));
+                    }
+                    if (found !== -1) {
+                        arr[found] = updated;
+                    } else {
+                        // not found - push as new (ensure uid)
+                        updated.uid = updated.uid || (Date.now() + Math.floor(Math.random()*999));
+                        arr.push(updated);
+                    }
+                    localStorage.setItem(key, JSON.stringify(arr));
+                    localStorage.removeItem('editStockItem');
+                } catch (e) { console.error('Error saving updated stock item', e); }
+
+                // redirect back to stock list after saving edits
+                window.location.href = '07_stock_management.html';
+                return;
+            }
+
+            // No edit - add new stock item
+            try {
+                const obj = {
+                    itemName: document.getElementById('stock_itemNameInput').value,
+                    modelNo: document.getElementById('stock_modelNo').value,
+                    mrnNo: document.getElementById('stock_mrnNo').value,
+                    size: document.getElementById('stock_sizeInput').value,
+                    moc: document.getElementById('stock_mocInput').value,
+                    class: document.getElementById('stock_classInput').value,
+                    remarks: document.getElementById('stock_remarks').value,
+                    qty: document.getElementById('stock_qty').value,
+                    invoiceNo: document.getElementById('stock_invoiceNo').value,
+                    sourceParty: document.getElementById('stock_sourcePartyInput').value,
+                    date: document.getElementById('stock_date').value,
+                    presentLocation: document.getElementById('stock_presentLocationInput').value
+                };
+                obj.uid = Date.now() + Math.floor(Math.random()*999);
+                const key = 'OrbitStock';
+                const raw = localStorage.getItem(key);
+                const arr = raw ? JSON.parse(raw) : [];
+                arr.unshift(obj);
+                localStorage.setItem(key, JSON.stringify(arr));
+            } catch (e) { console.error('Error saving stock item', e); }
+
+            alert('Stock item added successfully!');
+            e.target.reset();
+            loadStockTable();
+            window.location.href = '07_stock_management.html';
+        });
+
+        // Load Stock Table
+        function loadStockTable() {
+            const tbody = document.getElementById('stockTableBody');
+            if (!tbody) return;
+            
+            try {
+                const raw = localStorage.getItem('OrbitStock');
+                const arr = raw ? JSON.parse(raw) : [];
+                
+                if (arr.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="12" class="px-3 py-4 text-center text-slate-500">No stock items found</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = arr.map((item, idx) => `
+                    <tr class="border-b border-slate-100 hover:bg-blue-50/50">
+                        <td class="px-3 py-2 text-xs text-slate-900 font-semibold">${item.itemName || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.modelNo || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.mrnNo || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.size || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.moc || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.class || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.remarks || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.qty || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.invoiceNo || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.sourceParty || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.date || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.presentLocation || '-'}</td>
+                        <td class="px-3 py-2">
+                            <button onclick="editStockItem(${idx})" class="px-2 py-1 bg-gradient-to-r from-[var(--primary)] to-[var(--primary-light)] text-white text-xs font-bold rounded-md hover:shadow-lg transition-all">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error('Error loading stock table', e);
+            }
+        }
+
+        // Edit Stock Item
+        window.editStockItem = function(idx) {
+            try {
+                const raw = localStorage.getItem('OrbitStock');
+                const arr = raw ? JSON.parse(raw) : [];
+                const item = arr[idx];
+                if (!item) return;
+                localStorage.setItem('editStockItem', JSON.stringify({ item }));
+                window.location.reload();
+            } catch (e) {
+                console.error('Error editing stock item', e);
+            }
+        };
+        
+        // Assets form submit - persist assets to localStorage
+        document.getElementById('assetsForm').addEventListener('submit', function(e){
+            e.preventDefault();
+            const edit = JSON.parse(localStorage.getItem('editAssetItem') || 'null');
+            if (edit) {
+                try {
+                    const updated = Object.assign({}, edit.item);
+                    updated.category = document.getElementById('asset_type').value || '';
+                    updated.itemName = document.getElementById('asset_itemName').value || '';
+                    updated.serialNo = document.getElementById('asset_serialNo').value || '';
+                    updated.moc = document.getElementById('asset_moc').value || '';
+                    updated.size = document.getElementById('asset_size').value || '';
+                    updated.remarks = document.getElementById('asset_remarks').value || '';
+                    updated.qty = document.getElementById('asset_qty').value || '';
+                    updated.status = document.getElementById('asset_status').value || '';
+                    // persist
+                    const key = 'OrbitAssets';
+                    const raw = localStorage.getItem(key);
+                    const arr = raw ? JSON.parse(raw) : [];
+                    let found = -1;
+                    if (updated.uid) found = arr.findIndex(a => a.uid === updated.uid);
+                    if (found !== -1) arr[found] = updated; else { updated.uid = updated.uid || (Date.now() + Math.floor(Math.random()*999)); arr.unshift(updated); }
+                    localStorage.setItem(key, JSON.stringify(arr));
+                    localStorage.removeItem('editAssetItem');
+                } catch (err) { console.error('Error updating asset', err); }
+                alert('Asset changes saved. Redirecting back to Assets list.');
+                window.location.href = '07_stock_management.html';
+                return;
+            }
+
+            // add new asset
+            try {
+                const obj = {
+                    category: document.getElementById('asset_type').value || '',
+                    itemName: document.getElementById('asset_itemName').value || '',
+                    serialNo: document.getElementById('asset_serialNo').value || '',
+                    moc: document.getElementById('asset_moc').value || '',
+                    size: document.getElementById('asset_size').value || '',
+                    remarks: document.getElementById('asset_remarks').value || '',
+                    qty: document.getElementById('asset_qty').value || '',
+                    status: document.getElementById('asset_status').value || ''
+                };
+                obj.uid = Date.now() + Math.floor(Math.random()*999);
+                const key = 'OrbitAssets';
+                const raw = localStorage.getItem(key);
+                const arr = raw ? JSON.parse(raw) : [];
+                arr.unshift(obj);
+                localStorage.setItem(key, JSON.stringify(arr));
+            } catch (err) { console.error('Error saving asset', err); }
+
+            alert('Asset added successfully!');
+            e.target.reset();
+            loadAssetsTable();
+            window.location.href = '07_stock_management.html';
+        });
+
+        // Load Assets Table
+        function loadAssetsTable() {
+            const tbody = document.getElementById('assetsTableBody');
+            if (!tbody) return;
+            
+            try {
+                const raw = localStorage.getItem('OrbitAssets');
+                const arr = raw ? JSON.parse(raw) : [];
+                
+                if (arr.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="px-3 py-4 text-center text-slate-500">No pattern items found</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = arr.map((item, idx) => `
+                    <tr class="border-b border-slate-100 hover:bg-purple-50/50">
+                        <td class="px-3 py-2 text-xs text-slate-900 font-semibold">${item.category || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.itemName || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.serialNo || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.moc || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.size || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.remarks || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.qty || '-'}</td>
+                        <td class="px-3 py-2 text-xs text-slate-600">${item.status || '-'}</td>
+                        <td class="px-3 py-2">
+                            <button onclick="editAssetItem(${idx})" class="px-2 py-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white text-xs font-bold rounded-md hover:shadow-lg transition-all">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error('Error loading assets table', e);
+            }
+        }
+
+        // Edit Asset Item
+        window.editAssetItem = function(idx) {
+            try {
+                const raw = localStorage.getItem('OrbitAssets');
+                const arr = raw ? JSON.parse(raw) : [];
+                const item = arr[idx];
+                if (!item) return;
+                localStorage.setItem('editAssetItem', JSON.stringify({ category: item.category, item }));
+                sessionStorage.setItem('openAssetEdit', '1');
+                window.location.reload();
+            } catch (e) {
+                console.error('Error editing asset item', e);
+            }
+        };
+
+        // Mobile menu toggle (existing) and small navbar menu for 03
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    mobileMenu.classList.toggle('hidden');
+                });
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                        if (!mobileMenu.classList.contains('hidden')) {
+                            mobileMenu.classList.add('hidden');
+                        }
+                    }
+                });
+            }
+
+            // 03 small-screen navbar menu
+            const mobileMenuBtn03 = document.getElementById('mobileMenuBtn03');
+            const mobileMenu03 = document.getElementById('mobileMenu03');
+            if (mobileMenuBtn03 && mobileMenu03) {
+                mobileMenuBtn03.addEventListener('click', function(e){
+                    e.stopPropagation();
+                    mobileMenu03.classList.toggle('hidden');
+                });
+                document.addEventListener('click', function(e){
+                    if (!mobileMenu03.contains(e.target) && e.target !== mobileMenuBtn03) {
+                        mobileMenu03.classList.add('hidden');
+                    }
+                });
+            }
+        });
+                // Filter by type functionality
+        function filterStockByType(type) {
+            // Update button styles
+            document.querySelectorAll('.stock-filter-btn').forEach(btn => {
+                btn.classList.remove('active', 'primary-gradient', 'text-white', 'shadow-md', 'shadow-lg');
+                btn.classList.add('bg-white', 'border', 'border-slate-200', 'text-slate-700', 'shadow-md');
+            });
+
+            // Determine clicked button (if called programmatically, find by label)
+            let clickedBtn = null;
+            document.querySelectorAll('.stock-filter-btn').forEach(btn => {
+                const txt = btn.textContent.trim().toLowerCase();
+                if (txt.includes(type)) clickedBtn = btn;
+            });
+            // fallback to event.target if available
+            if (!clickedBtn && typeof event !== 'undefined' && event && event.target) clickedBtn = event.target;
+
+            if (clickedBtn) {
+                clickedBtn.classList.remove('bg-white', 'border', 'border-slate-200', 'text-slate-700', 'shadow-md');
+                clickedBtn.classList.add('active', 'primary-gradient', 'text-white', 'shadow-lg');
+            }
+
+            // Auto-select category
+            const categorySelect = document.getElementById('categorySelect');
+            const visibleInput = document.getElementById('categoryFilter03');
+            if (categorySelect) categorySelect.value = type;
+            // update visible dropdown input if present
+            if (visibleInput && clickedBtn) visibleInput.value = clickedBtn.textContent.trim();
+        }
+
+        // Dynamic input fields for category selection (kept for reference but not used)
+        const dynamicInputs = document.getElementById('dynamicInputs');
+        
+        const valveInputs = `
+            <div class='bg-white p-4 rounded-xl border-2 border-slate-200'>
+                <div class='grid grid-cols-1 md:grid-cols-3 gap-3'>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Item <span class='text-red-500'>*</span></label>
+                        <input id='valve_type' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Enter item name'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Model Number <span class='text-red-500'>*</span></label>
+                        <input id='valve_modelNo' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Enter model number'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Size <span class='text-red-500'>*</span></label>
+                        <input id='valve_size' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Enter size'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>MOC <span class='text-red-500'>*</span></label>
+                        <input id='valve_moc' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Material of Construction'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>End Connection</label>
+                        <input id='valve_endConnection' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Enter connection type'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Class</label>
+                        <input id='valve_class' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Enter class'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Remarks</label>
+                        <input id='valve_remarks' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Additional remarks'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Qty <span class='text-red-500'>*</span></label>
+                        <input id='valve_qty' type='number' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='0'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Source Invoice No</label>
+                        <input id='valve_invoiceNo' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Invoice number'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Source Party</label>
+                        <input id='valve_sourceParty' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Party name'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Date</label>
+                        <input id='valve_date' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='15 Jan 24'>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const pumpInputs = `
+            <div class='bg-white p-4 rounded-xl border-2 border-slate-200'>
+                <div class='grid grid-cols-1 md:grid-cols-3 gap-3'>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Item <span class='text-red-500'>*</span></label>
+                        <input id='pump_type' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Enter item name'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Model Number <span class='text-red-500'>*</span></label>
+                        <input id='pump_modelNo' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Enter model number'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>MOC <span class='text-red-500'>*</span></label>
+                        <input id='pump_moc' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Material of Construction'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Standard</label>
+                        <input id='pump_std' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Standard'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Mech Seal Type</label>
+                        <input id='pump_mechSealType' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Mechanical seal type'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Accessories Details</label>
+                        <input id='pump_accessories' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Enter accessories'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Qty <span class='text-red-500'>*</span></label>
+                        <input id='pump_qty' type='number' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='0'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Source Invoice No</label>
+                        <input id='pump_invoiceNo' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Invoice number'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Source Party</label>
+                        <input id='pump_sourceParty' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Party name'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Date</label>
+                        <input id='pump_date' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='10 Feb 24'>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const partsInputs = `
+            <div class='bg-white p-4 rounded-xl border-2 border-slate-200'>
+                <div class='grid grid-cols-1 md:grid-cols-3 gap-3'>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Item <span class='text-red-500'>*</span></label>
+                        <input id='parts_itemName' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Enter item name'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>For Equipment</label>
+                        <input id='parts_equipmentName' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Equipment name'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>MOC <span class='text-red-500'>*</span></label>
+                        <input id='parts_moc' type='text' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Material of Construction'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Remarks</label>
+                        <input id='parts_remarks' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Additional remarks'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Qty <span class='text-red-500'>*</span></label>
+                        <input id='parts_qty' type='number' required class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='0'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Source Invoice No</label>
+                        <input id='parts_invoiceNo' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Invoice number'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Source Party</label>
+                        <input id='parts_sourceParty' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='Party name'>
+                    </div>
+                    <div>
+                        <label class='block text-xs font-semibold text-slate-600 mb-1.5'>Date</label>
+                        <input id='parts_date' type='text' class='w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all' placeholder='05 Mar 24'>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Immediate check: if user came from stock or asset edit action, prefill the appropriate form
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                // stock edit - check first
+                const stockRaw = localStorage.getItem('editStockItem');
+                if (stockRaw) {
+                    try {
+                        const edit = JSON.parse(stockRaw);
+                        if (edit && edit.item) {
+                            // Populate stock form with dropdown inputs
+                            document.getElementById('stock_itemNameInput').value = edit.item.itemName || '';
+                            const itemNameSelect = document.getElementById('stock_itemName_select');
+                            if (itemNameSelect) {
+                                Array.from(itemNameSelect.options).forEach(opt => {
+                                    if (opt.text === edit.item.itemName) itemNameSelect.value = opt.value;
+                                });
+                            }
+                            document.getElementById('stock_modelNo').value = edit.item.modelNo || '';
+                            document.getElementById('stock_mrnNo').value = edit.item.mrnNo || '';
+                            document.getElementById('stock_sizeInput').value = edit.item.size || '';
+                            const sizeSelect = document.getElementById('stock_size_select');
+                            if (sizeSelect) {
+                                Array.from(sizeSelect.options).forEach(opt => {
+                                    if (opt.text === edit.item.size) sizeSelect.value = opt.value;
+                                });
+                            }
+                            document.getElementById('stock_mocInput').value = edit.item.moc || '';
+                            const mocSelect = document.getElementById('stock_moc_select');
+                            if (mocSelect) {
+                                Array.from(mocSelect.options).forEach(opt => {
+                                    if (opt.text === edit.item.moc) mocSelect.value = opt.value;
+                                });
+                            }
+                            document.getElementById('stock_classInput').value = edit.item.class || '';
+                            const classSelect = document.getElementById('stock_class_select');
+                            if (classSelect) {
+                                Array.from(classSelect.options).forEach(opt => {
+                                    if (opt.text === edit.item.class) classSelect.value = opt.value;
+                                });
+                            }
+                            document.getElementById('stock_remarks').value = edit.item.remarks || '';
+                            document.getElementById('stock_qty').value = edit.item.qty || '';
+                            document.getElementById('stock_invoiceNo').value = edit.item.invoiceNo || '';
+                            document.getElementById('stock_sourcePartyInput').value = edit.item.sourceParty || '';
+                            const sourceSelect = document.getElementById('stock_sourceParty_select');
+                            if (sourceSelect) {
+                                Array.from(sourceSelect.options).forEach(opt => {
+                                    if (opt.text === edit.item.sourceParty) sourceSelect.value = opt.value;
+                                });
+                            }
+                            document.getElementById('stock_date').value = edit.item.date || '';
+                            document.getElementById('stock_presentLocationInput').value = edit.item.presentLocation || '';
+                            const locationSelect = document.getElementById('stock_presentLocation_select');
+                            if (locationSelect) {
+                                Array.from(locationSelect.options).forEach(opt => {
+                                    if (opt.text === edit.item.presentLocation) locationSelect.value = opt.value;
+                                });
+                            }
+
+                            // Show delete button
+                            const deleteBtn = document.getElementById('deleteStockBtn');
+                            if (deleteBtn) {
+                                deleteBtn.style.display = 'inline-flex';
+                                deleteBtn.onclick = () => {
+                                    if (!confirm('Are you sure you want to delete this item?')) return;
+                                    try {
+                                        const editRaw = localStorage.getItem('editStockItem');
+                                        if (editRaw) {
+                                            const edit = JSON.parse(editRaw);
+                                            if (edit && edit.item && edit.item.uid) {
+                                                const key = 'OrbitStock';
+                                                const raw = localStorage.getItem(key);
+                                                const arr = raw ? JSON.parse(raw) : [];
+                                                const idx = arr.findIndex(i => i.uid === edit.item.uid);
+                                                if (idx !== -1) {
+                                                    arr.splice(idx, 1);
+                                                    localStorage.setItem(key, JSON.stringify(arr));
+                                                }
+                                            }
+                                        }
+                                    } catch (e) { console.error('Error deleting item', e); }
+                                    localStorage.removeItem('editStockItem');
+                                    alert('Item deleted successfully!');
+                                    window.location.href = '07_stock_management.html';
+                                };
+                            }
+                            return;
+                        }
+                    } catch (e) {
+                        console.log('Error parsing editStockItem:', e);
+                    }
+                }
+
+                // asset edit - check if stock edit wasn't found
+                const assetRaw = localStorage.getItem('editAssetItem');
+                const openAssetFlag = (function(){ try { return sessionStorage.getItem('openAssetEdit') === '1'; } catch(e){ return false; } })();
+                if (assetRaw && openAssetFlag) {
+                    try {
+                        const edit = JSON.parse(assetRaw);
+                        if (edit && edit.category && edit.item) {
+                            // Manually switch to assets tab
+                            assetsBtn.classList.remove('bg-white', 'text-slate-700', 'border-2', 'border-slate-200', 'shadow-md');
+                            assetsBtn.classList.add('primary-gradient', 'text-white', 'shadow-lg');
+                            stockBtn.classList.add('bg-white', 'text-slate-700', 'border-2', 'border-slate-200', 'shadow-md');
+                            stockBtn.classList.remove('primary-gradient', 'text-white', 'shadow-lg');
+                            assetsSection.classList.remove('hidden');
+                            stockSection.classList.add('hidden');
+                            document.body.classList.remove('stock-active');
+                            
+                            // populate asset form
+                            console.log('Populating asset form with item:', edit.item);
+                            document.getElementById('asset_type').value = edit.category || '';
+                            document.getElementById('asset_itemName').value = edit.item.itemName || '';
+                            document.getElementById('asset_serialNo').value = edit.item.serialNo || '';
+                            document.getElementById('asset_moc').value = edit.item.moc || '';
+                            document.getElementById('asset_size').value = edit.item.size || '';
+                            document.getElementById('asset_remarks').value = edit.item.remarks || '';
+                            document.getElementById('asset_qty').value = edit.item.qty || '';
+                            document.getElementById('asset_status').value = (edit.item.status || '').toLowerCase();
+
+                            // show delete button in edit mode
+                            const deleteBtn = document.getElementById('deleteAssetBtn');
+                            if (deleteBtn) {
+                                deleteBtn.onclick = () => {
+                                    if (!confirm('Are you sure you want to delete this asset?')) return;
+                                    try {
+                                        const editRaw = localStorage.getItem('editAssetItem');
+                                        if (editRaw) {
+                                            const edit = JSON.parse(editRaw);
+                                            if (edit && edit.item && edit.item.uid) {
+                                                const key = 'OrbitAssets';
+                                                const raw = localStorage.getItem(key);
+                                                const arr = raw ? JSON.parse(raw) : [];
+                                                const idx = arr.findIndex(i => i.uid === edit.item.uid);
+                                                if (idx !== -1) {
+                                                    arr.splice(idx, 1);
+                                                    localStorage.setItem(key, JSON.stringify(arr));
+                                                }
+                                            }
+                                        }
+                                    } catch (e) { console.error('Error deleting asset', e); }
+
+                                    localStorage.removeItem('editAssetItem');
+                                    alert('Asset deleted successfully!');
+                                    window.location.href = '07_stock_management.html';
+                                };
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Error parsing editAssetItem:', e);
+                    }
+                }
+
+                // Load tables after checking for edits
+                loadStockTable();
+                loadAssetsTable();
+            }, 100);
+        });
+    </script>
+    <script src="assets/lang.js"></script>
+</body>
+</html>

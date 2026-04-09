@@ -1,0 +1,172 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+:root {
+  --primary: #022758;
+  --primary-light: #1a3a5c;
+  --secondary: #e8f1f8;
+  --tertiary: #95b3cc;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.8s ease-out;
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.8s ease-out;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.8s ease-out;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.bg-gradient-blue {
+  background: linear-gradient(135deg, #011d45 0%, #022758 50%, #011d45 100%);
+}
+
+.wave-pattern {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 150px;
+  opacity: 0.15;
+}
+
+.wave-svg path {
+  fill: rgba(255, 255, 255, 0.3);
+}
+
+.glass-effect {
+  background: #ffffff;
+  backdrop-filter: blur(20px);
+}
+
+.input-focused {
+  border-color: #022758 !important;
+  transform: translateY(-2px);
+}
+
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shine::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.btn-shine:hover::before {
+  left: 100%;
+}
+
+.logo-glow {
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+}
+
+.password-toggle {
+  transition: all 0.3s ease;
+}
+
+.password-toggle:hover {
+  transform: scale(1.1);
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #333;
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+@media (max-width: 768px) {
+  html,
+  body {
+    overflow-y: auto;
+  }
+
+  .wave-pattern {
+    width: 80px;
+    opacity: 0.08;
+  }
+}

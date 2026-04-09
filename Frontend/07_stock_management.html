@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Management - Orbit</title>
+    <!-- Inline SVG favicon to avoid automatic /favicon.ico 404 requests -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23004040'/%3E%3Ctext x='50' y='56' fill='%23ffffff' font-size='58' font-family='Inter,Arial' text-anchor='middle'%3EF%3C/text%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary: #022758; --primary-light: #1A3A5C; --secondary: #E8F1F8; --tertiary: #95B3CC; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        /* Primary helpers */
+        .primary-gradient { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; }
+        .primary-btn { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; box-shadow: 0 8px 20px rgba(2,39,88,0.14); }
+        /* Utility to remove shadows where needed */
+        .no-shadow { box-shadow: none !important; }
+        .no-shadow:hover, .no-shadow:active { box-shadow: none !important; transform: none !important; }
+        .primary-shadow { box-shadow: 0 12px 28px rgba(2,39,88,0.12); }
+
+        /* Table & header styles (match dashboard) */
+        thead.gradient-header { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; }
+        .table-compact { font-size: 0.875rem; line-height: 1.25rem; }
+        .table-compact th, .table-compact td { font-size: 0.875rem !important; line-height: 1.25rem !important; padding: 0.75rem; }
+        th.table-th { padding: 0.5rem 0.75rem; text-align: left; font-size: 0.875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+        td.table-td { padding: 0.75rem; }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Assets compact mode: reduce unnecessary spacing when viewing Assets */
+        .filter-row-compact { margin-bottom: 0.5rem !important; }
+        .assets-mode .table-container { padding-bottom: 0.5rem !important; }
+        /* Mobile asset cards should be white with dark text (top stats remain colored) */
+        .assets-mode .mobile-card-primary { background: white !important; color: #111827 !important; border: 1px solid rgba(15,23,42,0.06); }
+        .assets-mode .mobile-card-primary .font-bold, .assets-mode .mobile-card-primary .font-semibold { color: #111827 !important; }
+        .assets-mode .mobile-card-primary .text-slate-600 { color: #6b7280 !important; }
+        .assets-mode tbody tr:hover { background: rgba(2,39,88,0.04) !important; }
+        .assets-mode .edit-btn-primary { background: linear-gradient(90deg, var(--primary), var(--primary-light)); color: white; }
+
+        /* Category select hover and option hover styling */
+        /* Removed primary hover on category input as requested */
+
+        /* Option hover styling may work in some browsers */
+        #categoryFilter option:hover {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+        }
+
+        #categoryFilter:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Custom dropdown styling (copied from 5.1_Add_Process_To_Body.html) */
+        .custom-dropdown {
+            position: absolute;
+            z-index: 50;
+            width: 100%;
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 64, 64, 0.15);
+            margin-top: 4px;
+            max-height: none;
+            overflow: visible;
+        }
+        /* Utility to hide the dropdown wrapper when not applicable (e.g., Assets tab) */
+        .dropdown-input-wrapper.hidden { display: none !important; }
+        .custom-dropdown-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #1f2937;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+        }
+        .custom-dropdown-option:last-child { border-bottom: none; }
+        .custom-dropdown-option:hover { background: var(--primary); color: white; }
+
+        /* Dropdown input wrapper & caret (match 5.1) */
+        .dropdown-input-wrapper { position: relative; width: 100%; }
+        /* Keep filter row on one line: show full controls without horizontal scroll */
+        #filterRow { overflow-x: visible; }
+        /* In filter row: keep dropdown a reasonable fixed size so the search input shrinks to fit */
+        #filterRow .dropdown-input-wrapper { flex: 0 0 auto; min-width: 110px; max-width: 220px; width: auto; }
+        /* Allow the main search container to shrink below its content width when needed */
+        #filterRow .flex-1 { min-width: 0; }
+        /* Keep tab buttons and Add button from shrinking too small */
+        #filterRow .tab-btn, #filterRow .add-btn { flex-shrink: 0; }
+        .dropdown-input-wrapper::after {
+            content: '\f078';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary);
+            pointer-events: none;
+            font-size: 12px;
+        }
+        /* Ensure dropdown values don't get hidden behind the caret */
+        .input-field-with-dropdown { padding-right: 44px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .input-field-with-dropdown[readonly] { cursor: pointer; }
+        .input-field-with-dropdown::after { pointer-events: none; }
+        /* Minimum search input width so it remains usable when compressed */
+        #searchInput { min-width: 80px; }
+
+        /* Slightly larger Add button in filter row (more prominent) */
+        #filterRow .add-btn {
+            padding: 0.45rem 0.9rem; /* larger vertical and horizontal padding */
+            font-size: 0.9rem;
+            gap: 0.5rem;
+            border-radius: 8px;
+        }
+        #filterRow .add-btn i { font-size: 14px; line-height: 1; }
+        #filterRow .add-btn span { display: inline-block; margin-top: -1px; }
+
+        /* Make the table action buttons more compact */
+        .table-compact .col-actions .btn-primary { padding: 0.2rem 0.4rem !important; font-size: 0.72rem !important; }
+        .table-compact .col-actions .btn-primary i { font-size: 11px !important; }
+        .table-compact .col-actions { width: 1px; white-space: nowrap; }
+
+        /* Keep filter row and Add button on the same line for Assets view on larger screens; allow wrapping on small screens */
+        @media (min-width: 768px) {
+            .assets-mode #filterRow { flex-wrap: nowrap !important; align-items: center; }
+        }
+        @media (max-width: 767px) {
+            /* Allow filters to wrap on small screens to avoid horizontal overflow */
+            .assets-mode #filterRow { flex-wrap: wrap !important; align-items: stretch; gap: 0.5rem; }
+            #filterRow .dropdown-input-wrapper { min-width: 90px; max-width: 160px; }
+            #filterRow .add-btn { width: 100%; justify-content: center; }
+            #searchInput { min-width: 0 !important; width: 100% !important; }
+        }
+        /* Ensure consistent spacing for filter row and table across all views */
+        #filterRow { margin-bottom: 1rem !important; padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; min-height: 56px !important; align-items: center; }
+        /* Table container behaviour (match dashboard) */
+        .table-container { padding-top: 0 !important; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .assets-mode #filterButtons { flex: 1 1 auto; min-width: 0; display: flex; gap: 0.5rem; overflow-x: auto; }
+
+        /* Consistent compact table sizing (match Dashboard) */
+        .table-compact { font-size: 0.875rem; line-height: 1.25rem; }
+        .table-compact th, .table-compact td { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+        .table-compact td > *, .table-compact th > * { font-size: inherit !important; line-height: inherit !important; }
+        .table-compact th, .table-compact td { padding: 0.75rem 0.75rem; }
+        /* Smaller styling for status/action/detail columns */
+        .table-compact .col-status { font-size: 0.78rem !important; }
+        .table-compact .col-status span { font-size: 0.75rem !important; padding: 0.25rem 0.5rem !important; }
+        .table-compact .col-actions { font-size: 0.78rem !important; }
+        .table-compact .col-actions .btn-primary { padding: 0.45rem !important; }
+        .table-compact .col-detail { font-size: 0.78rem !important; }
+        .table-compact .col-detail .btn-view { padding: 0.35rem 0.6rem !important; }
+        .table-compact .col-actions, .table-compact .col-detail, .table-compact .col-status { vertical-align: middle; }
+
+        /* Small button utilities (match Dashboard look) */
+        .btn-primary { background: linear-gradient(90deg, var(--primary), var(--primary-light)) !important; color: white !important; border-radius: 6px; padding: 0.45rem 0.6rem; font-weight: 700; box-shadow: none; }
+        .btn-view { background: linear-gradient(90deg, var(--primary), var(--primary-light)) !important; color: white !important; border-radius: 6px; padding: 0.35rem 0.6rem; font-weight: 700; box-shadow: none; }
+        .assets-mode #filterButtons .filter-btn { white-space: nowrap; }
+        .assets-mode .add-btn { flex-shrink: 0; margin-left: 0.5rem; white-space: nowrap; }
+        .assets-mode .filter-row-compact { margin-bottom: 0.25rem !important; }
+
+        /* Stats cards size / width adjustments (match 10.1 style) */
+        /* Stats cards: responsive sizing to fill grid columns */
+        #statsCards > .primary-gradient {
+            min-height: 100px;
+            padding: 0.85rem;
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            text-align: left;
+            box-shadow: 0 12px 28px rgba(2,39,88,0.12);
+            transition: all 0.18s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        #statsCards > .primary-gradient:hover { box-shadow: 0 18px 38px rgba(2,39,88,0.16); transform: translateY(-3px); }
+        #statsCards > .primary-gradient .w-8, #statsCards > .primary-gradient .w-9 { width: 32px; height: 32px; }
+        #statsCards > .primary-gradient p.text-xl, #statsCards > .primary-gradient span.text-2xl { font-size: 1.25rem; }
+        #statsCards { justify-items: stretch; }
+
+        /* Smaller screens: slightly reduced paddings & font sizes */
+        @media (max-width: 640px) {
+            #statsCards > .primary-gradient { padding: 0.6rem; min-height: 88px; }
+            #statsCards > .primary-gradient .w-8, #statsCards > .primary-gradient .w-9 { width: 28px; height: 28px; }
+            #statsCards > .primary-gradient p.text-xl, #statsCards > .primary-gradient span.text-2xl { font-size: 1.05rem; }
+        }
+
+        /* Adjust stats card sizing on small screens but keep primary gradient so the header remains colored */
+        @media (max-width: 640px) {
+            #statsCards > .primary-gradient {
+                padding: 0.6rem;
+                min-height: 88px;
+            }
+            #statsCards > .primary-gradient .w-8, #statsCards > .primary-gradient .w-9 { width: 28px; height: 28px; }
+            #statsCards > .primary-gradient p.text-xl, #statsCards > .primary-gradient span.text-2xl { font-size: 1.05rem; }
+        }
+
+        /* Make stats cards equal height and align content */
+        #statsCards { align-items: stretch; }
+        #statsCards > * { height: 100%; display: flex; flex-direction: column; justify-content: space-between; min-height: 120px; }
+        #statsCards > button, #statsCards > div { width: 100%; }
+
+        /* Keep primary gradient on mobile so stat cards and asset cards remain colored as requested */
+        /* (Removed global mobile toning to keep color consistency) */
+        #statsCards .w-9 { flex-shrink: 0; }
+        
+
+
+        .tab-btn {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-btn.active {
+            transform: translateY(-2px);
+        }
+
+        .table-row {
+            transition: all 0.3s ease;
+        }
+
+        .table-row:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen">
+        <!-- Professional Header -->
+    <header style="background:var(--primary);" class="sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Title Section -->
+                <div class="flex items-center space-x-4">
+                    <div>
+                        <h1 class="text-xl font-bold text-white">Stock Management</h1>
+                    </div>
+                </div>
+
+                <!-- Back to Dashboard Button -->
+                <div class="flex items-center space-x-3">
+                    <a href="1.1_dashboard.html" title="Back to Dashboard" class="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 bg-white text-[var(--primary)] rounded-lg font-semibold shadow hover:scale-105 transition-all whitespace-nowrap">
+                        <i class="fas fa-house text-sm"></i>
+                        <span class="text-xs sm:text-sm">Dashboard</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-5">
+        <!-- Page Header -->
+        <div class="mb-3 sm:mb-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6" id="statsCards">
+                <!-- Stats will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Tab Buttons moved into filter row -->
+
+        <!-- Search + Filters + Action Row (compact) -->
+        <div id="filterRow" class="flex flex-wrap md:flex-nowrap items-center gap-2 mb-3 sm:mb-4">
+            <div class="flex gap-2 items-center flex-shrink-0">
+                <button onclick="switchTab('stock')" id="stockTab" class="tab-btn active flex-shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 primary-btn no-shadow rounded-lg font-bold transition-all duration-300">
+                    <div class="flex items-center gap-1.5">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        </svg>
+                        <span class="text-sm">Stock</span>
+                    </div>
+                </button>
+                <button onclick="switchTab('pattern')" id="patternTab" class="tab-btn flex-shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 bg-white text-slate-700 rounded-lg font-bold no-shadow hover:scale-105 transition-all duration-300 border-2 border-slate-200">
+                    <div class="flex items-center gap-1.5">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                        <span class="text-sm">Pattern</span>
+                    </div>
+                </button>
+                <button onclick="switchTab('po')" id="poTab" class="tab-btn flex-shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 bg-white text-slate-700 rounded-lg font-bold no-shadow hover:scale-105 transition-all duration-300 border-2 border-slate-200">
+                    <div class="flex items-center gap-1.5">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        <span class="text-sm">PO</span>
+                    </div>
+                </button>
+            </div>
+
+            <div class="flex-1 min-w-0 mr-3">
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Search by name, type, serial..." class="w-full pl-9 sm:pl-10 pr-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" oninput="searchItems()">
+                    <svg class="absolute left-3 top-2.5 text-slate-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                </div>
+            </div>
+            
+            <button onclick="downloadExcel()" class="flex-shrink-0 px-3 sm:px-4 py-2 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-lg transition-all hover:scale-105" style="background: linear-gradient(135deg, #16a34a, #22c55e);" title="Download Excel">
+                <i class="fas fa-file-excel mr-1 sm:mr-2"></i>Excel
+            </button>
+
+            <a href="03_stock_assets.html" class="inline-flex add-btn items-center justify-center gap-1 px-3 py-1.5 primary-btn rounded-md text-xs sm:text-sm font-semibold transition-all ml-2">
+                <i class="fas fa-plus-circle text-sm"></i>
+                <span>Add</span>
+            </a>
+        </div>
+
+        <!-- End Search + Filters -->
+        
+
+        <!-- Content Container -->
+        <div class="bg-white rounded-lg sm:rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-fadeIn">
+            <!-- Desktop Table View (visible on md and up) -->
+            <div class="hidden md:block overflow-x-auto table-container">
+                <table class="w-full table-compact">
+                    <thead class="gradient-header" id="tableHeader">
+                        <!-- Table headers will be rendered here -->
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Table rows will be rendered here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile Card View -->
+            <div class="lg:hidden p-3 grid grid-cols-1 sm:grid-cols-2 gap-3" id="mobileCards">
+                <!-- Mobile cards will be rendered here -->
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-3 sm:px-4 py-2.5 sm:py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                <div class="text-xs sm:text-sm text-slate-600">
+                    Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> items
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="prevPage()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-white border border-slate-200 rounded-md text-slate-700 text-xs sm:text-sm font-medium hover:bg-slate-50 transition-all">Previous</button>
+                    <div id="pageButtons" class="flex items-center gap-1"></div>
+                    <button onclick="nextPage()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-white border border-slate-200 rounded-md text-slate-700 text-xs sm:text-sm font-medium hover:bg-slate-50 transition-all">Next</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentTab = 'stock';
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        // Stock Data (default)
+        const _defaultStockData = [
+            { category: 'Valve', type: 'Ball Valve', size: 'DN50', moc: 'CF8M', endConnection: 'Flanged', class: 'PN16', remarks: 'High pressure', qty: 45, invoiceNo: 'INV-2024-001', sourceParty: 'Valve Corp', date: '15 Jan 24' },
+            { category: 'Valve', type: 'Gate Valve', size: 'DN80', moc: 'Carbon Steel', endConnection: 'Threaded', class: 'PN25', remarks: 'Standard', qty: 32, invoiceNo: 'INV-2024-002', sourceParty: 'Industrial Parts', date: '20 Jan 24' },
+            { category: 'Pump', type: 'Centrifugal', modelNo: 'CP-500', moc: 'SS316', std: 'API 610', mechSealType: 'Type 21', accessories: 'Coupling, Base', qty: 15, invoiceNo: 'INV-2024-003', sourceParty: 'Pump Systems', date: '10 Feb 24' },
+            { category: 'Pump', type: 'Submersible', modelNo: 'SP-250', moc: 'Cast Iron', std: 'IS 2885', mechSealType: 'Type 1', accessories: 'Cable, Control Panel', qty: 8, invoiceNo: 'INV-2024-004', sourceParty: 'Aqua Pumps', date: '25 Feb 24' },
+            { category: 'Parts', itemName: 'Impeller', equipmentName: 'Centrifugal Pump', moc: 'Bronze', remarks: 'Replacement part', qty: 50, invoiceNo: 'INV-2024-005', sourceParty: 'Parts Supplier', date: '05 Mar 24' },
+            { category: 'Parts', itemName: 'Seal Kit', equipmentName: 'Ball Valve DN50', moc: 'PTFE', remarks: 'Service kit', qty: 100, invoiceNo: 'INV-2024-006', sourceParty: 'Seal Tech', date: '12 Mar 24' },
+            { category: 'Valve', type: 'Butterfly Valve', size: 'DN65', moc: 'DI', endConnection: 'Wafer', class: 'PN10', remarks: 'General', qty: 20, invoiceNo: 'INV-2024-007', sourceParty: 'ValveWorks', date: '20 Mar 24' },
+            { category: 'Pump', type: 'Centrifugal', modelNo: 'CP-750', moc: 'SS316', std: 'API 610', mechSealType: 'Type 21', accessories: 'Coupling, Guard', qty: 6, invoiceNo: 'INV-2024-008', sourceParty: 'Pump Systems', date: '02 Apr 24' },
+            { category: 'Parts', itemName: 'Bearing Set', equipmentName: 'Pump CP-500', moc: 'Steel', remarks: 'High durability', qty: 120, invoiceNo: 'INV-2024-009', sourceParty: 'Bearings Co', date: '10 Apr 24' },
+            { category: 'Parts', itemName: 'Gasket Pack', equipmentName: 'Various', moc: 'Graphite', remarks: 'Spare parts', qty: 200, invoiceNo: 'INV-2024-010', sourceParty: 'Gasket Supplies', date: '18 Apr 24' }
+        ];
+        // load persisted stock (if any) and merge with defaults
+        let stockData = (function(){ try { const raw = localStorage.getItem('OrbitStock'); const arr = raw ? JSON.parse(raw) : []; return arr.concat(_defaultStockData); } catch(e){ console.error('Error loading persisted stock', e); return _defaultStockData; } })();
+
+        // Pattern Data (default)
+        const _defaultPatternData = [
+            { category: 'Machinery', itemName: 'CNC Machine', serialNo: 'CNC2024001', moc: 'Cast Iron', size: 'Large', buyFrom: 'Tech Industries', buyLocation: 'Mumbai', remarks: 'High precision', qty: 1, value: '₹25,00,000', status: 'Operational' },
+            { category: 'Tools', itemName: 'Welding Machine', serialNo: 'WM2024032', moc: 'Steel', size: 'Medium', buyFrom: 'Weld Pro', buyLocation: 'Delhi', remarks: 'Industrial grade', qty: 2, value: '₹3,20,000', status: 'Under Maintenance' },
+            { category: 'Machinery', itemName: 'Lathe Machine', serialNo: 'LT2024008', moc: 'Steel', size: 'Large', buyFrom: 'Machine Tools Ltd', buyLocation: 'Pune', remarks: 'Heavy duty', qty: 1, value: '₹12,00,000', status: 'Operational' },
+            { category: 'Others', itemName: 'Air Compressor', serialNo: 'AC2024021', moc: 'Aluminum', size: 'Small', buyFrom: 'Compressor Co', buyLocation: 'Bangalore', remarks: 'Portable', qty: 3, value: '₹4,50,000', status: 'Operational' },
+            { category: 'Tools', itemName: 'Grinding Machine', serialNo: 'GM2024045', moc: 'Steel', size: 'Medium', buyFrom: 'Grind Tech', buyLocation: 'Chennai', remarks: 'Multi-purpose', qty: 2, value: '₹2,80,000', status: 'Operational' },
+            { category: 'Others', itemName: 'Generator', serialNo: 'GEN2024010', moc: 'Steel Casing', size: '50KVA', buyFrom: 'Power Systems', buyLocation: 'Kolkata', remarks: 'Backup power', qty: 1, value: '₹8,50,000', status: 'Operational' },
+            { category: 'Machinery', itemName: 'Milling Machine', serialNo: 'MM2024051', moc: 'Steel', size: 'Large', buyFrom: 'MillWorks', buyLocation: 'Hyderabad', remarks: 'New', qty: 1, value: '₹9,50,000', status: 'Operational' },
+            { category: 'Tools', itemName: 'Hydraulic Press', serialNo: 'HP2024062', moc: 'Steel', size: 'Medium', buyFrom: 'Press Co', buyLocation: 'Ahmedabad', remarks: 'Service due', qty: 1, value: '₹6,00,000', status: 'Under Maintenance' },
+            { category: 'Others', itemName: 'Forklift', serialNo: 'FL2024070', moc: 'Steel', size: 'Large', buyFrom: 'LiftPro', buyLocation: 'Mumbai', remarks: 'Operational', qty: 2, value: '₹14,00,000', status: 'Operational' },
+            { category: 'Tools', itemName: 'Drill Machine', serialNo: 'DM2024080', moc: 'Steel', size: 'Small', buyFrom: 'DrillTech', buyLocation: 'Coimbatore', remarks: 'Spare', qty: 5, value: '₹1,20,000', status: 'Operational' }
+        ];
+        // load persisted pattern (if any) and merge with defaults
+        let patternData = (function(){ try { const raw = localStorage.getItem('OrbitAssets'); const arr = raw ? JSON.parse(raw) : []; return arr.concat(_defaultPatternData); } catch(e){ console.error('Error loading persisted pattern', e); return _defaultPatternData; } })();
+
+        // PO Data (default) - with proper items array for valve/pump parts
+        const _defaultPOData = [
+            { 
+                poNo: 'PO-2024-001', 
+                orderNo: 'ORD-2024-001',
+                client: 'ABC Industries', 
+                vendor: 'Valve Corp', 
+                location: 'Mumbai',
+                date: '15 Jan 24', 
+                amount: '₹2,50,000', 
+                status: 'Pending', 
+                deliveryDate: '25 Jan 24',
+                items: [
+                    { type: 'valve', sr: '001', valveType: 'Ball Valve', size: '2"', endConnection: 'Flanged', class: '150', bodyMoc: 'WCB', qty: 5, missingParts: [
+                        { partName: 'Body', required: 5, available: 3, shortage: 2, unit: 'Pcs', moc: 'WCB' },
+                        { partName: 'Ball', required: 5, available: 2, shortage: 3, unit: 'Pcs', moc: 'SS304' },
+                        { partName: 'Stem', required: 5, available: 5, shortage: 0, unit: 'Pcs', moc: 'SS410' }
+                    ]},
+                    { type: 'valve', sr: '002', valveType: 'Gate Valve', size: '3"', endConnection: 'Flanged', class: '300', bodyMoc: 'CF8M', qty: 5, missingParts: [
+                        { partName: 'Body', required: 5, available: 5, shortage: 0, unit: 'Pcs', moc: 'CF8M' },
+                        { partName: 'Wedge', required: 5, available: 4, shortage: 1, unit: 'Pcs', moc: 'CF8M' }
+                    ]}
+                ]
+            },
+            { 
+                poNo: 'PO-2024-002', 
+                orderNo: 'ORD-2024-002',
+                client: 'XYZ Corp', 
+                vendor: 'Pump Systems', 
+                location: 'Delhi',
+                date: '20 Jan 24', 
+                amount: '₹4,50,000', 
+                status: 'Approved', 
+                deliveryDate: '01 Feb 24',
+                items: [
+                    { type: 'pump', sr: '001', model: 'Centrifugal CP-100', moc: 'SS316', seal: 'Mechanical', motor: '5 HP', qty: 3, missingParts: [
+                        { partName: 'Impeller', required: 3, available: 2, shortage: 1, unit: 'Pcs', moc: 'SS316' },
+                        { partName: 'Shaft', required: 3, available: 3, shortage: 0, unit: 'Pcs', moc: 'SS316' },
+                        { partName: 'Mechanical Seal', required: 3, available: 1, shortage: 2, unit: 'Set', moc: 'Carbon/Ceramic' }
+                    ]}
+                ]
+            },
+            { 
+                poNo: 'PO-2024-003', 
+                orderNo: 'ORD-2024-003',
+                client: 'PQR Ltd', 
+                vendor: 'Industrial Parts', 
+                location: 'Pune',
+                date: '10 Feb 24', 
+                amount: '₹3,20,000', 
+                status: 'Completed', 
+                deliveryDate: '20 Feb 24',
+                items: [
+                    { type: 'valve', sr: '001', valveType: 'Gate Valve', size: '4"', endConnection: 'Flanged', class: '150', bodyMoc: 'WCB', qty: 8, missingParts: [] },
+                    { type: 'valve', sr: '002', valveType: 'Check Valve', size: '2"', endConnection: 'Flanged', class: '150', bodyMoc: 'WCB', qty: 7, missingParts: [] }
+                ]
+            },
+            { 
+                poNo: 'PO-2024-004', 
+                orderNo: 'ORD-2024-004',
+                client: 'MNO Industries', 
+                vendor: 'Seal Tech', 
+                location: 'Chennai',
+                date: '25 Feb 24', 
+                amount: '₹1,80,000', 
+                status: 'Pending', 
+                deliveryDate: '05 Mar 24',
+                items: [
+                    { type: 'parts', sr: '001', partsName: 'Seal Kit', pumpModel: 'CP-100', moc: 'PTFE', qty: 50, missingQty: 20 }
+                ]
+            },
+            { 
+                poNo: 'PO-2024-005', 
+                orderNo: 'ORD-2024-005',
+                client: 'DEF Corp', 
+                vendor: 'Bearings Co', 
+                location: 'Bangalore',
+                date: '05 Mar 24', 
+                amount: '₹2,00,000', 
+                status: 'Approved', 
+                deliveryDate: '15 Mar 24',
+                items: [
+                    { type: 'valve', sr: '001', valveType: 'Butterfly Valve', size: '6"', endConnection: 'Wafer', class: 'PN16', bodyMoc: 'DI', qty: 10, missingParts: [
+                        { partName: 'Body', required: 10, available: 8, shortage: 2, unit: 'Pcs', moc: 'DI' },
+                        { partName: 'Disc', required: 10, available: 6, shortage: 4, unit: 'Pcs', moc: 'SS316' },
+                        { partName: 'Seat', required: 10, available: 10, shortage: 0, unit: 'Pcs', moc: 'EPDM' }
+                    ]},
+                    { type: 'pump', sr: '002', model: 'Gear Pump GP-50', moc: 'CI', seal: 'Packing', motor: '2 HP', qty: 2, missingParts: [
+                        { partName: 'Gears', required: 4, available: 4, shortage: 0, unit: 'Pcs', moc: 'CI' },
+                        { partName: 'Bearing', required: 4, available: 2, shortage: 2, unit: 'Pcs', moc: 'Steel' }
+                    ]}
+                ]
+            }
+        ];
+        // load persisted PO (if any) and merge with defaults
+        let poData = (function(){ try { const raw = localStorage.getItem('OrbitPO'); const arr = raw ? JSON.parse(raw) : []; return arr.concat(_defaultPOData); } catch(e){ console.error('Error loading persisted PO', e); return _defaultPOData; } })();
+
+        // Pagination state (responsive)
+        let itemsPerPage = window.innerWidth < 640 ? 4 : 8;
+        let currentPage = 1;
+
+        // Recompute items per page on resize (keep UX consistent)
+        window.addEventListener('resize', () => {
+            const newPer = window.innerWidth < 640 ? 4 : 8;
+            if (newPer !== itemsPerPage) {
+                itemsPerPage = newPer;
+                currentPage = 1;
+                renderContent();
+            }
+        });
+
+        // Initialize
+        renderStatsCards();
+        renderFilterButtons();
+        renderContent();
+
+        function goToPage(n) {
+            const data = getFilteredData();
+            const totalPages = Math.max(1, Math.ceil(data.length / itemsPerPage));
+            if (n < 1) n = 1;
+            if (n > totalPages) n = totalPages;
+            currentPage = n;
+            renderContent();
+            window.scrollTo({ top: 220, behavior: 'smooth' });
+        }
+
+        function prevPage() { if (currentPage > 1) goToPage(currentPage - 1); }
+        function nextPage() { const data = getFilteredData(); const totalPages = Math.max(1, Math.ceil(data.length / itemsPerPage)); if (currentPage < totalPages) goToPage(currentPage + 1); }
+
+        function renderPagination(totalPages, totalItems, start, end) {
+            const pageButtonsDiv = document.getElementById('pageButtons');
+            if (!pageButtonsDiv) return;
+            pageButtonsDiv.innerHTML = '';
+
+            const maxButtons = 7;
+            let startPage = 1;
+            let endPage = totalPages;
+            if (totalPages > maxButtons) {
+                const half = Math.floor(maxButtons / 2);
+                startPage = Math.max(1, currentPage - half);
+                endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+
+            if (startPage > 1) {
+                const btn = document.createElement('button');
+                btn.className = 'px-3 py-1.5 bg-white border border-slate-200 rounded-md text-slate-700 text-xs sm:text-sm';
+                btn.textContent = '1';
+                btn.onclick = () => goToPage(1);
+                pageButtonsDiv.appendChild(btn);
+                if (startPage > 2) {
+                    const dots = document.createElement('span');
+                    dots.className = 'px-2 text-xs text-slate-400';
+                    dots.textContent = '...';
+                    pageButtonsDiv.appendChild(dots);
+                }
+            }
+
+            for (let p = startPage; p <= endPage; p++) {
+                const btn = document.createElement('button');
+                btn.className = 'px-3 py-1.5 border border-slate-200 rounded-md text-xs sm:text-sm';
+                if (p === currentPage) btn.classList.add('bg-gradient-to-r', 'from-[var(--primary)]', 'to-[var(--primary-light)]', 'text-white');
+                btn.textContent = p;
+                btn.onclick = () => goToPage(p);
+                pageButtonsDiv.appendChild(btn);
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const dots = document.createElement('span');
+                    dots.className = 'px-2 text-xs text-slate-400';
+                    dots.textContent = '...';
+                    pageButtonsDiv.appendChild(dots);
+                }
+                const btn = document.createElement('button');
+                btn.className = 'px-3 py-1.5 bg-white border border-slate-200 rounded-md text-slate-700 text-xs sm:text-sm';
+                btn.textContent = totalPages;
+                btn.onclick = () => goToPage(totalPages);
+                pageButtonsDiv.appendChild(btn);
+            }
+
+            // Update showing count display
+            document.getElementById('showingCount').textContent = `${start}-${end}`;
+            document.getElementById('totalCount').textContent = totalItems;
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            currentFilter = 'all';
+            searchQuery = '';
+            document.getElementById('searchInput').value = '';
+
+            // Update tab button styles
+            const stockTab = document.getElementById('stockTab');
+            const patternTab = document.getElementById('patternTab');
+            const poTab = document.getElementById('poTab');
+
+            // Reset all tabs to inactive state
+            stockTab.className = 'tab-btn flex-shrink-0 px-4 py-1.5 bg-white text-slate-700 rounded-lg font-bold no-shadow hover:scale-105 transition-all border-2 border-slate-200';
+            patternTab.className = 'tab-btn flex-shrink-0 px-4 py-1.5 bg-white text-slate-700 rounded-lg font-bold no-shadow hover:scale-105 transition-all border-2 border-slate-200';
+            poTab.className = 'tab-btn flex-shrink-0 px-4 py-1.5 bg-white text-slate-700 rounded-lg font-bold no-shadow hover:scale-105 transition-all border-2 border-slate-200';
+
+            // Set active tab
+            if (tab === 'stock') {
+                stockTab.className = 'tab-btn active flex-shrink-0 px-5 py-2 primary-btn no-shadow rounded-lg font-bold transition-all';
+            } else if (tab === 'pattern') {
+                patternTab.className = 'tab-btn active flex-shrink-0 px-5 py-2 primary-btn no-shadow rounded-lg font-bold transition-all';
+            } else if (tab === 'po') {
+                poTab.className = 'tab-btn active flex-shrink-0 px-5 py-2 primary-btn no-shadow rounded-lg font-bold transition-all';
+            }
+
+            renderStatsCards();
+            renderFilterButtons();
+            renderContent();
+
+            // Toggle compact mode for pattern view
+            const mainEl = document.querySelector('main');
+            const filterRowEl = document.getElementById('filterRow');
+            if (tab === 'pattern') {
+                mainEl && mainEl.classList.add('assets-mode');
+                filterRowEl && filterRowEl.classList.add('filter-row-compact');
+            } else {
+                mainEl && mainEl.classList.remove('assets-mode');
+                filterRowEl && filterRowEl.classList.remove('filter-row-compact');
+            }
+        }
+
+        function renderStatsCards() {
+            const data = currentTab === 'stock' ? stockData : (currentTab === 'pattern' ? patternData : poData);
+            const container = document.getElementById('statsCards');
+
+            if (currentTab === 'stock') {
+                const totalStock = data.length;
+                const inStock = data.filter(item => item.status === 'In Stock').length;
+                const lowStock = data.filter(item => item.status === 'Low Stock').length;
+                const totalQuantity = data.reduce((sum, item) => sum + (item.qty || 0), 0);
+
+                container.innerHTML = `
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Total Items</p>
+                                <p class="text-xl font-bold text-white">${totalStock}</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                                    <path d="M9 11l3 3L22 4"></path>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">In Stock</p>
+                                <p class="text-xl font-bold text-white">${inStock}</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Low Stock</p>
+                                <p class="text-xl font-bold text-white">${lowStock}</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Total Qty</p>
+                                <p class="text-xl font-bold text-white">${totalQuantity}</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg class="fa-solid fa-layer-group" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <path d="M12 2l8 4-8 4-8-4 8-4z"></path>
+                                    <path d="M12 10l8-4v6l-8 4-8-4V6l8 4z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Unique Types</p>
+                                <p class="text-xl font-bold text-white">${new Set(data.map(d=> (d.type||d.itemName||'')).filter(Boolean)).size}</p>
+                            </div>
+                        </div>
+
+                    </div>
+                `;
+            } else if (currentTab === 'pattern') {
+                const totalPattern = data.length;
+                const operational = data.filter(item => item.status === 'Operational').length;
+                const maintenance = data.filter(item => item.status === 'Under Maintenance').length;
+                const totalValue = data.length * 10; // Simplified
+
+                container.innerHTML = `
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Total Pattern</p>
+                                <p class="text-xl font-bold text-white">${totalPattern}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                                    <path d="M9 11l3 3L22 4"></path>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Operational</p>
+                                <p class="text-xl font-bold text-white">${operational}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Maintenance</p>
+                                <p class="text-xl font-bold text-white">${maintenance}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Total Value</p>
+                                <p class="text-xl font-bold text-white">₹${totalValue}L</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <path d="M3 12h18M3 6h18M3 18h18"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Avg Value</p>
+                                <p class="text-xl font-bold text-white">₹${Math.round(totalValue/(totalPattern||1))}L</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (currentTab === 'po') {
+                const totalPO = data.length;
+                const pending = data.filter(item => item.status === 'Pending').length;
+                const approved = data.filter(item => item.status === 'Approved').length;
+                const completed = data.filter(item => item.status === 'Completed').length;
+
+                container.innerHTML = `
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Total POs</p>
+                                <p class="text-xl font-bold text-white">${totalPO}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Pending</p>
+                                <p class="text-xl font-bold text-white">${pending}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Approved</p>
+                                <p class="text-xl font-bold text-white">${approved}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Completed</p>
+                                <p class="text-xl font-bold text-white">${completed}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="primary-gradient rounded-lg shadow-lg p-3 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                        <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/20">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white/80 text-xs font-semibold uppercase">Total Value</p>
+                                <p class="text-xl font-bold text-white">₹${(totalPO * 2.5).toFixed(1)}L</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderFilterButtons() {
+            // No filter buttons needed anymore
+            const container = document.getElementById('filterButtons');
+            if (container) container.innerHTML = '';
+        }
+
+        function getFilteredData() {
+            const data = currentTab === 'stock' ? stockData : (currentTab === 'pattern' ? patternData : poData);
+            let filtered = data;
+
+            // Apply search filter
+            if (searchQuery) {
+                filtered = filtered.filter(item => {
+                    const searchLower = searchQuery.toLowerCase();
+                    if (currentTab === 'stock') {
+                        return (item.type && item.type.toLowerCase().includes(searchLower)) ||
+                               (item.itemName && item.itemName.toLowerCase().includes(searchLower)) ||
+                               (item.modelNo && item.modelNo.toLowerCase().includes(searchLower)) ||
+                               (item.moc && item.moc.toLowerCase().includes(searchLower));
+                    } else if (currentTab === 'pattern') {
+                        return item.itemName.toLowerCase().includes(searchLower) ||
+                               item.serialNo.toLowerCase().includes(searchLower) ||
+                               item.buyFrom.toLowerCase().includes(searchLower);
+                    } else {
+                        return (item.poNo && item.poNo.toLowerCase().includes(searchLower)) ||
+                               (item.vendor && item.vendor.toLowerCase().includes(searchLower)) ||
+                               (item.items && item.items.toLowerCase().includes(searchLower));
+                    }
+                });
+            }
+
+            return filtered;
+        }
+
+        function renderContent() {
+            const data = getFilteredData();
+            const tableHeader = document.getElementById('tableHeader');
+            const tableBody = document.getElementById('tableBody');
+            const mobileCards = document.getElementById('mobileCards');
+
+            const totalItems = data.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+            if (currentPage > totalPages) currentPage = totalPages;
+            const startIdx = (currentPage - 1) * itemsPerPage;
+            const pageData = data.slice(startIdx, startIdx + itemsPerPage);
+
+            // Update showing range and total
+            const showingStart = totalItems === 0 ? 0 : startIdx + 1;
+            const showingEnd = Math.min(startIdx + itemsPerPage, totalItems);
+            document.getElementById('showingCount').textContent = `${showingStart}-${showingEnd}`;
+            document.getElementById('totalCount').textContent = totalItems;
+
+            if (currentTab === 'stock') {
+                // Show all stock items without category filter
+                let headers = `
+                    <tr>
+                        <th class="table-th">Category</th>
+                        <th class="table-th">Item</th>
+                        <th class="table-th">Model/Size</th>
+                        <th class="table-th">MOC</th>
+                        <th class="table-th">Details</th>
+                        <th class="table-th">Qty</th>
+                        <th class="table-th">Invoice</th>
+                        <th class="table-th">Party</th>
+                        <th class="table-th">Date</th>
+                        <th class="table-th">Action</th>
+                    </tr>
+                `;
+                let renderRow = (item, idx) => `
+                    <tr class="table-row border-b border-slate-100 hover:bg-blue-50/50">
+                        <td class="table-td"><span class="px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold ${getCategoryColor(item.category)}">${item.category || '-'}</span></td>
+                        <td class="table-td font-semibold text-slate-900 text-xs sm:text-sm">${item.type || item.itemName || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.modelNo || item.size || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.moc || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.endConnection || item.std || item.equipmentName || item.remarks || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.qty || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.invoiceNo || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.sourceParty || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.date || '-'}</td>
+                        <td class="table-td col-actions">
+                            <button onclick="editItem('${(item.category||'').toLowerCase()}', ${idx})" class="btn-primary inline-flex items-center justify-center gap-2 px-2 py-1 text-white text-xs font-bold rounded-md">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                
+                // Stock items - unified fields
+                headers = `
+                    <tr>
+                        <th class="table-th">Item</th>
+                        <th class="table-th">Model</th>
+                        <th class="table-th">MRN No</th>
+                        <th class="table-th">Size</th>
+                        <th class="table-th">MOC</th>
+                        <th class="table-th">Class</th>
+                        <th class="table-th">Notes</th>
+                        <th class="table-th">Qty</th>
+                        <th class="table-th">Inv.</th>
+                        <th class="table-th">Party</th>
+                        <th class="table-th">Date</th>
+                        <th class="table-th">Location</th>
+                        <th class="table-th">Action</th>
+                    </tr>
+                `;
+                renderRow = (item, idx) => `
+                    <tr class="table-row border-b border-slate-100 hover:bg-blue-50/50">
+                        <td class="table-td font-semibold text-slate-900 text-xs sm:text-sm">${item.itemName || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.modelNo || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.mrnNo || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.size || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.moc || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.class || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.remarks || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.qty || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.invoiceNo || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.sourceParty || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.date || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.presentLocation || '-'}</td>
+                        <td class="table-td col-actions">
+                            <button onclick="editItem('stock', ${startIdx + idx})" class="btn-primary inline-flex items-center justify-center gap-2 px-2 py-1 text-white text-xs font-bold rounded-md">
+                                <i class="fas fa-edit text-sm"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+
+                if (false) {
+                    headers = `
+                        <tr>
+                            <th class="table-th">Item</th>
+                            <th class="table-th">Model</th>
+                            <th class="table-th">Size</th>
+                            <th class="table-th">MOC</th>
+                            <th class="table-th">End Conn</th>
+                            <th class="table-th">Class</th>
+                            <th class="table-th">Remarks</th>
+                            <th class="table-th">Qty</th>
+                            <th class="table-th">Invoice</th>
+                            <th class="table-th">Party</th>
+                            <th class="table-th">Date</th>
+                            <th class="table-th">Action</th>
+                        </tr>
+                    `;
+                    renderRow = (item, idx) => `
+                        <tr class="table-row border-b border-slate-100 hover:bg-blue-50/50">
+                            <td class="table-td font-semibold text-slate-900 text-xs sm:text-sm">${item.type || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.modelNo || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.size || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.moc || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.endConnection || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.class || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.remarks || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.qty || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.invoiceNo || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.sourceParty || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.date || '-'}</td>
+                            <td class="table-td col-actions">
+                                <button onclick="editItem('valve', ${startIdx + idx})" class="btn-primary inline-flex items-center justify-center gap-2 px-2 py-1 text-white text-xs font-bold rounded-md">
+                                    <i class="fas fa-edit text-sm"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                } else if (currentFilter === 'pump') {                    headers = `
+                        <tr>
+                            <th class="table-th">Item</th>
+                            <th class="table-th">Model</th>
+                            <th class="table-th">MOC</th>
+                            <th class="table-th">Std</th>
+                            <th class="table-th">Mech Seal</th>
+                            <th class="table-th">Accessories</th>
+                            <th class="table-th">Qty</th>
+                            <th class="table-th">Invoice</th>
+                            <th class="table-th">Party</th>
+                            <th class="table-th">Date</th>
+                            <th class="table-th">Action</th>
+                        </tr>
+                    `;
+                    renderRow = (item, idx) => `
+                        <tr class="table-row border-b border-slate-100 hover:bg-blue-50/50">
+                            <td class="table-td font-semibold text-slate-900 text-xs sm:text-sm">${item.type || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.modelNo || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.moc || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.std || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.mechSealType || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.accessories || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.qty || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.invoiceNo || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.sourceParty || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.date || '-'}</td>
+                            <td class="table-td col-actions">
+                                <button onclick="editItem('pump', ${startIdx + idx})" class="btn-primary inline-flex items-center justify-center gap-2 px-2 py-1 text-white text-xs font-bold rounded-md">
+                                    <i class="fas fa-edit text-sm"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                } else if (currentFilter === 'parts') {
+                    headers = `
+                        <tr>
+                            <th class="table-th">Item</th>
+                            <th class="table-th">Equipment</th>
+                            <th class="table-th">MOC</th>
+                            <th class="table-th">Remarks</th>
+                            <th class="table-th">Qty</th>
+                            <th class="table-th">Invoice</th>
+                            <th class="table-th">Party</th>
+                            <th class="table-th">Date</th>
+                            <th class="table-th">Action</th>
+                        </tr>
+                    `;
+                    renderRow = (item, idx) => `
+                        <tr class="table-row border-b border-slate-100 hover:bg-blue-50/50">
+                            <td class="table-td font-semibold text-slate-900 text-xs sm:text-sm">${item.itemName || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.equipmentName || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.moc || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.remarks || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.qty || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.invoiceNo || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.sourceParty || '-'}</td>
+                            <td class="table-td text-slate-600 text-xs">${item.date || '-'}</td>
+                            <td class="table-td col-actions">
+                                <button onclick="editItem('parts', ${startIdx + idx})" class="btn-primary inline-flex items-center justify-center gap-2 px-2 py-1 text-white text-xs font-bold rounded-md">
+                                    <i class="fas fa-edit text-sm"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                tableHeader.innerHTML = headers;
+
+                // Render page rows or fallback message when empty
+                if (pageData.length === 0) {
+                    tableBody.innerHTML = `<tr><td class="table-td text-center" colspan="12">No items to show</td></tr>`;
+                } else {
+                    tableBody.innerHTML = pageData.map((item, idx) => renderRow(item, startIdx + idx)).join('');
+                }
+
+                // expose edit function to global scope
+                window.editItem = function(category, idx) {
+                    const filtered = getFilteredData();
+                    const item = filtered[idx];
+                    if (!item) return;
+                    localStorage.setItem('editStockItem', JSON.stringify({ category, item }));
+                    // navigate to edit page
+                    window.location.href = '03_stock_assets.html';
+                };
+
+                // expose edit function for assets
+                window.editAssetItem = function(category, idx) {
+                    // Get the item from filtered data first
+                    const filtered = getFilteredData();
+                    const item = filtered[idx];
+                    if (!item) return;
+                    
+                    // Find the actual index in assetsData by serialNo (unique identifier)
+                    const actualIdx = assetsData.findIndex(asset => asset.serialNo === item.serialNo);
+                    if (actualIdx === -1) return;
+                    
+                    localStorage.setItem('editAssetItem', JSON.stringify({ category, item, actualIdx }));
+                    window.location.href = '03_stock_assets.html';
+                };
+
+                // Stock Mobile Cards (only render current page) — white background with dark text
+                mobileCards.innerHTML = pageData.map((item, idx) => `
+                    <div class="bg-gradient-to-br from-white to-slate-50 rounded-lg p-3 sm:p-4 shadow-md border border-slate-200 hover:shadow-lg transition-all flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <div class="font-bold text-slate-900 text-sm sm:text-base mb-1">${item.type || item.itemName}</div>
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold ${getCategoryColor(item.category)}">${item.category}</span>
+                                </div>
+                            </div>
+                            <div class="space-y-1.5 text-xs sm:text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-600">Model No:</span>
+                                    <span class="font-semibold text-slate-900">${item.modelNo || '-'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-600">MRN No:</span>
+                                    <span class="font-semibold text-slate-900">${item.mrnNo || '-'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-600">MOC:</span>
+                                    <span class="font-semibold text-slate-900">${item.moc || '-'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-600">Qty:</span>
+                                    <span class="font-bold text-blue-600">${item.qty || '-'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-600">Invoice:</span>
+                                    <span class="font-semibold text-slate-900">${item.invoiceNo || '-'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-600">Party:</span>
+                                    <span class="font-semibold text-slate-900">${item.sourceParty || '-'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-600">Date:</span>
+                                    <span class="font-semibold text-slate-900">${item.date || '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex justify-end">
+                            <button onclick="editItem('${(item.category||'').toLowerCase()}', ${startIdx + idx})" class="px-3 py-1.5 btn-primary rounded-md text-xs font-bold shadow hover:scale-105 transition">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // render pagination controls for stock
+                renderPagination(totalPages, totalItems, showingStart, showingEnd);
+            } else if (currentTab === 'pattern') {
+                // Pattern Table Header
+                tableHeader.innerHTML = `
+                    <tr>
+                        <th class="table-th">Type</th>
+                        <th class="table-th">Item</th>
+                        <th class="table-th">Sr No</th>
+                        <th class="table-th">MOC</th>
+                        <th class="table-th">Size</th>
+                        <th class="table-th">Buy From</th>
+                        <th class="table-th">Buy Loc</th>
+                        <th class="table-th">Remarks</th>
+                        <th class="table-th">Qty</th>
+                        <th class="table-th">Status</th>
+                        <th class="table-th">Action</th>
+                    </tr>
+                `;
+
+
+                // Assets Table Rows (with Edit action)
+                tableBody.innerHTML = pageData.map((item, idx) => `
+                    <tr class="table-row border-b border-slate-100 hover:bg-[rgba(2,39,88,0.04)]">
+                        <td class="table-td"><span class="px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold ${getCategoryColor(item.category)}">${item.category || '-'}</span></td>
+                        <td class="table-td font-semibold text-slate-900 text-xs sm:text-sm">${item.itemName || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs font-mono">${item.serialNo || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.moc || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.size || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.buyFrom || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.buyLocation || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.remarks || '-'}</td>
+                        <td class="table-td font-bold text-purple-600 text-xs sm:text-sm">${item.qty || '-'}</td>
+                        <td class="table-td"><span class="px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold ${getConditionColor(item.status)}">${item.status || '-'}</span></td>
+                        <td class="table-td col-actions">
+                            <button onclick="editAssetItem('${(item.category||'').toLowerCase()}', ${startIdx + idx})" class="btn-primary inline-flex items-center justify-center gap-2 px-2 py-1 text-white text-xs font-bold rounded-md">
+                                <i class="fas fa-edit text-sm"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Assets Mobile Cards (with Edit action) — white background with dark text
+                mobileCards.innerHTML = pageData.map((item, idx) => `
+                    <div class="bg-gradient-to-br from-white to-slate-50 rounded-lg p-3 sm:p-4 shadow-md border border-slate-200 hover:shadow-lg transition-all mobile-card-primary">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <div class="font-bold text-slate-900 text-sm sm:text-base mb-1">${item.itemName}</div>
+                                <span class="px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold ${getCategoryColor(item.category)}">${item.category}</span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-semibold ${getConditionColor(item.status)}">${item.status}</span>
+                        </div>
+                        <div class="space-y-1.5 text-xs sm:text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Serial No:</span>
+                                <span class="font-mono text-slate-900">${item.serialNo}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">MOC:</span>
+                                <span class="font-semibold text-slate-900">${item.moc}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Size:</span>
+                                <span class="font-semibold text-slate-900">${item.size}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Buy From:</span>
+                                <span class="font-semibold text-slate-900">${item.buyFrom}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Location:</span>
+                                <span class="font-semibold text-slate-900">${item.buyLocation}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Qty:</span>
+                                <span class="font-bold text-slate-900">${item.qty}</span>
+                            </div>
+                            <div class="mt-3 flex justify-end">
+                                <button onclick="editAssetItem('${(item.category||'').toLowerCase()}', ${startIdx + idx})" class="px-3 py-1.5 edit-btn-primary rounded-md text-xs font-bold shadow hover:scale-105 transition">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // render pagination controls for pattern
+                renderPagination(totalPages, totalItems, showingStart, showingEnd);
+            } else if (currentTab === 'po') {
+                // PO Table Header - Order + Missing Parts Details
+                tableHeader.innerHTML = `
+                    <tr>
+                        <th class="table-th">PO No</th>
+                        <th class="table-th">Order</th>
+                        <th class="table-th">Client</th>
+                        <th class="table-th">Type</th>
+                        <th class="table-th">Missing Parts</th>
+                        <th class="table-th">Qty</th>
+                        <th class="table-th">Date</th>
+                        <th class="table-th">Status</th>
+                        <th class="table-th">Action</th>
+                    </tr>
+                `;
+
+                // PO Table Rows - Show order + parts details
+                tableBody.innerHTML = pageData.map((item, idx) => {
+                    // Format missing parts list
+                    let partsDisplay = '-';
+                    if (item.missingParts && item.missingParts.length > 0) {
+                        partsDisplay = item.missingParts.map(p => `${p.partName} (${p.shortage})`).join(', ');
+                        if (partsDisplay.length > 40) partsDisplay = partsDisplay.substring(0, 40) + '...';
+                    } else if (item.items) {
+                        partsDisplay = item.items;
+                    }
+                    
+                    const totalQty = item.totalShortage || (item.missingParts ? item.missingParts.reduce((s, p) => s + p.shortage, 0) : '-');
+                    
+                    // Find the actual index in full poData array
+                    const realIndex = poData.findIndex(p => p.uid === item.uid || p.poNo === item.poNo);
+                    
+                    return `
+                    <tr class="table-row border-b border-slate-100 hover:bg-[rgba(2,39,88,0.04)] cursor-pointer" onclick="viewPODetails(${realIndex})" style="cursor: pointer;">
+                        <td class="table-td font-semibold text-purple-700 text-xs">${item.poNo || '-'}</td>
+                        <td class="table-td font-semibold text-slate-900 text-xs">${item.orderNo || item.vendor || '-'}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.client || '-'}</td>
+                        <td class="table-td"><span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-100 text-blue-700">${item.orderType || 'N/A'}</span></td>
+                        <td class="table-td text-slate-600 text-xs" title="${item.missingParts ? item.missingParts.map(p => p.partName + ': ' + p.shortage + ' ' + p.unit).join('\\n') : ''}">${partsDisplay}</td>
+                        <td class="table-td font-bold text-red-600 text-xs">${totalQty}</td>
+                        <td class="table-td text-slate-600 text-xs">${item.date || '-'}</td>
+                        <td class="table-td"><span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${getPOStatusColor(item.status)}">${item.status || '-'}</span></td>
+                        <td class="table-td col-actions">
+                            <i class="fas fa-arrow-right text-slate-400"></i>
+                        </td>
+                    </tr>
+                `}).join('');
+
+                // PO Mobile Cards - Show order + parts details
+                mobileCards.innerHTML = pageData.map((item, idx) => {
+                    let partsList = '';
+                    if (item.missingParts && item.missingParts.length > 0) {
+                        partsList = item.missingParts.map(p => `
+                            <div class="flex justify-between text-xs py-1 border-b border-slate-100">
+                                <span class="text-slate-600">${p.partName}</span>
+                                <span class="font-bold text-red-600">${p.shortage} ${p.unit}</span>
+                            </div>
+                        `).join('');
+                    }
+                    
+                    // Find the actual index in full poData array
+                    const realIndex = poData.findIndex(p => p.uid === item.uid || p.poNo === item.poNo);
+                    
+                    return `
+                    <div class="bg-gradient-to-br from-white to-slate-50 rounded-lg p-3 sm:p-4 shadow-md border border-slate-200 hover:shadow-lg transition-all mobile-card-primary">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <p class="text-xs text-purple-600 font-bold">${item.poNo}</p>
+                                <h3 class="text-sm font-bold text-slate-900">Order: ${item.orderNo || '-'}</h3>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${getPOStatusColor(item.status)}">${item.status}</span>
+                        </div>
+                        <div class="space-y-1.5 text-xs">
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Client:</span>
+                                <span class="font-semibold text-slate-900">${item.client || '-'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Type:</span>
+                                <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-100 text-blue-700">${item.orderType || 'N/A'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Date:</span>
+                                <span class="font-semibold text-slate-900">${item.date}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Delivery:</span>
+                                <span class="font-semibold text-slate-900">${item.deliveryDate || '-'}</span>
+                            </div>
+                        </div>
+                        ${item.missingParts && item.missingParts.length > 0 ? `
+                        <div class="mt-3 pt-2 border-t border-slate-200">
+                            <p class="text-xs font-bold text-red-600 mb-2">⚠️ Missing Parts (${item.missingParts.length})</p>
+                            ${partsList}
+                        </div>
+                        ` : ''}
+                        <div class="mt-3 flex justify-end">
+                            <button onclick="event.stopPropagation(); viewPODetails(${realIndex});" class="btn-primary inline-flex items-center justify-center gap-2 px-3 py-1.5 text-white text-xs font-bold rounded-md">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </div>
+                    </div>
+                `}).join('');
+
+                // render pagination controls for PO
+                renderPagination(totalPages, totalItems, showingStart, showingEnd);
+            }
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                'Valve': 'bg-blue-100 text-blue-700',
+                'Pump': 'bg-purple-100 text-purple-700',
+                'Parts': 'bg-green-100 text-green-700',
+                'Machinery': 'bg-indigo-100 text-indigo-700',
+                'Tools': 'bg-cyan-100 text-cyan-700',
+                'Others': 'bg-slate-100 text-slate-700'
+            };
+            return colors[category] || 'bg-slate-100 text-slate-700';
+        }
+
+        function getStatusColor(status) {
+            return status === 'Operational' 
+                ? 'bg-emerald-100 text-emerald-700' 
+                : 'bg-orange-100 text-orange-700';
+        }
+
+        function getConditionColor(condition) {
+            return condition === 'Operational' 
+                ? 'bg-emerald-100 text-emerald-700' 
+                : 'bg-orange-100 text-orange-700';
+        }
+
+        function getPOStatusColor(status) {
+            const colors = {
+                'Pending': 'bg-orange-100 text-orange-700',
+                'Approved': 'bg-blue-100 text-blue-700',
+                'Completed': 'bg-emerald-100 text-emerald-700'
+            };
+            return colors[status] || 'bg-slate-100 text-slate-700';
+        }
+
+        window.editPOItem = function(idx) {
+            const filtered = getFilteredData();
+            const item = filtered[idx];
+            if (!item) return;
+            localStorage.setItem('editPOItem', JSON.stringify({ item, idx }));
+            window.location.href = '03_stock_assets.html';
+        };
+
+        // View PO Details - Navigate to new page
+        window.viewPODetails = function(idx) {
+            try {
+                // Get the full poData array
+                const fullData = currentTab === 'po' ? poData : [];
+                
+                if (!fullData || fullData.length === 0) {
+                    alert('No PO data available!');
+                    return;
+                }
+                
+                // idx here is the actual index in the full array
+                const item = fullData[idx];
+                
+                if (!item) {
+                    console.error('PO item not found at index:', idx);
+                    console.log('Full PO Data:', fullData);
+                    alert('PO data not found! Index: ' + idx);
+                    return;
+                }
+                
+                console.log('Opening PO:', item.poNo, 'Index:', idx);
+                
+                // Save PO data for the new page with the real index in full data
+                localStorage.setItem('viewPOItem', JSON.stringify({ item, idx }));
+                window.location.href = '07.1_po_receive.html';
+            } catch(e) {
+                console.error('Error opening PO details:', e);
+                alert('Error opening PO details: ' + e.message);
+            }
+        };
+        
+        window.closePOModal = function() {
+            const modal = document.getElementById('poDetailModal');
+            if (modal) modal.remove();
+        };
+        
+        window.updatePOStatus = function(idx) {
+            const newStatus = prompt('Enter new status (Pending / Approved / Completed):');
+            if (newStatus && ['Pending', 'Approved', 'Completed'].includes(newStatus)) {
+                try {
+                    const raw = localStorage.getItem('OrbitPO');
+                    const arr = raw ? JSON.parse(raw) : [];
+                    if (arr[idx]) {
+                        arr[idx].status = newStatus;
+                        localStorage.setItem('OrbitPO', JSON.stringify(arr));
+                        closePOModal();
+                        renderContent();
+                        renderStatsCards();
+                    }
+                } catch(e) { console.error('Error updating PO status', e); }
+            }
+        };
+
+        function filterItems(category) {
+            currentFilter = category;
+            renderFilterButtons();
+            renderContent();
+        }
+
+        function searchItems() {
+            searchQuery = document.getElementById('searchInput').value;
+            renderContent();
+        }
+
+        function goToConfiguration() {
+            window.location.href = '10_configuration.html';
+        }
+        
+        // Mobile menu toggle with click-outside-to-close
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    mobileMenu.classList.toggle('hidden');
+                });
+
+                // Close menu when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            }
+        });
+
+        // Download Excel Function
+        function downloadExcel() {
+            let data = [];
+            let sheetName = '';
+            const date = new Date().toLocaleDateString('en-IN').replace(/\//g, '-');
+            
+            if (currentTab === 'stock') {
+                sheetName = 'Stock_Report';
+                data = stockData.map(item => ({
+                    'Item Name': item.name || '',
+                    'Type': item.type || '',
+                    'Serial No': item.serial || '',
+                    'Category': item.category || '',
+                    'Quantity': item.quantity || 0,
+                    'Unit': item.unit || '',
+                    'Min Stock': item.minStock || 0,
+                    'Location': item.location || '',
+                    'Last Updated': item.lastUpdated || ''
+                }));
+            } else if (currentTab === 'pattern') {
+                sheetName = 'Pattern_Report';
+                data = patternData.map(item => ({
+                    'Pattern Name': item.name || '',
+                    'Type': item.type || '',
+                    'Serial No': item.serial || '',
+                    'Material': item.material || '',
+                    'Size': item.size || '',
+                    'Quantity': item.quantity || 0,
+                    'Condition': item.condition || '',
+                    'Location': item.location || '',
+                    'Last Used': item.lastUsed || ''
+                }));
+            } else if (currentTab === 'po') {
+                sheetName = 'PO_Report';
+                data = poData.map(item => ({
+                    'PO Number': item.poNo || '',
+                    'Date': item.date || '',
+                    'Supplier': item.supplier || '',
+                    'Item': item.item || '',
+                    'Quantity': item.qty || 0,
+                    'Unit': item.unit || '',
+                    'Status': item.status || '',
+                    'Expected Delivery': item.expectedDelivery || '',
+                    'Remarks': item.remarks || ''
+                }));
+            }
+            
+            if (data.length === 0) {
+                alert('No data available to export!');
+                return;
+            }
+            
+            // Create workbook and worksheet
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(data);
+            
+            // Set column widths
+            const colWidths = Object.keys(data[0]).map(() => ({ wch: 15 }));
+            ws['!cols'] = colWidths;
+            
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            
+            // Generate and download file
+            XLSX.writeFile(wb, `${sheetName}_${date}.xlsx`);
+        }
+    </script>
+    <script src="assets/lang.js"></script>
+</body>
+</html>
