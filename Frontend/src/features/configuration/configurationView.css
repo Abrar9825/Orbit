@@ -1,0 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
+.configuration-view-page {
+  font-family: 'Inter', sans-serif;
+  --primary: #022758;
+  --primary-light: #1a3a5c;
+  --secondary: #e8f1f8;
+  --tertiary: #95b3cc;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.configuration-view-page .primary-gradient {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: #ffffff;
+}
+
+.configuration-view-page .primary-btn {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(2, 39, 88, 0.14);
+}
+
+.configuration-view-page .table-header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+}
+
+.configuration-view-page table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.configuration-view-page table tbody tr:hover {
+  background-color: #f0f9ff;
+}
+
+.configuration-view-page .pagination-controls {
+  position: relative;
+  width: 100%;
+  justify-content: center;
+}
+
+.configuration-view-page .pagination-controls .prev-btn {
+  position: absolute;
+  left: 0;
+}
+
+.configuration-view-page .pagination-controls .next-btn {
+  position: absolute;
+  right: 0;
+}
+
+.configuration-view-page .pagination-controls .page-buttons {
+  margin: 0 auto;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.configuration-view-page .btn-view {
+  background: linear-gradient(90deg, var(--primary), rgba(2, 39, 88, 0.85)) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.configuration-view-page .mobile-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.configuration-view-page .mobile-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.configuration-view-page .mobile-card-header {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--primary);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.configuration-view-page .mobile-card-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  font-size: 0.85rem;
+}
+
+.configuration-view-page .mobile-card-label {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.configuration-view-page .mobile-card-value {
+  font-weight: 500;
+  color: #1e293b;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .configuration-view-page .table-view {
+    display: none;
+  }
+
+  .configuration-view-page .card-view {
+    display: block !important;
+  }
+
+  .configuration-view-page .pagination-controls {
+    position: static !important;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .configuration-view-page .pagination-controls .prev-btn,
+  .configuration-view-page .pagination-controls .next-btn {
+    position: static !important;
+  }
+
+  .configuration-view-page .tab-btn {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .configuration-view-page nav h1 {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .configuration-view-page .table-view {
+    display: block;
+  }
+
+  .configuration-view-page .card-view {
+    display: none !important;
+  }
+}

@@ -51,7 +51,7 @@ export default function useLoginController() {
       localStorage.setItem('orbitAuthToken', result.data.token);
       localStorage.setItem('orbitWorker', JSON.stringify(result.data.worker || {}));
 
-      window.location.href = '1.1_dashboard.html';
+      window.location.href = '/cards';
     } catch (error) {
       const message =
         error?.response?.data?.message || error?.message || 'Login failed. Please try again.';
