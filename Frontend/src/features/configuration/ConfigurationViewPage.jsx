@@ -1,4 +1,4 @@
-import useConfigurationViewController from './useConfigurationViewController';
+import useConfigurationViewController from './useConfigurationViewControllerBackend';
 
 function PaginationControls({ tab, meta, currentPage, onPrev, onNext, onPage }) {
   const maxButtons = 5;
@@ -485,14 +485,15 @@ function BomTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onEdit, 
         <table className="w-full text-sm">
           <thead className="bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white" id="bomTableHead">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold">Valve Name</th>
+              <th className="px-4 py-3 text-left font-semibold">Template Name</th>
+              <th className="px-4 py-3 text-left font-semibold">Valve Type</th>
               <th className="px-4 py-3 text-left font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
             {pageItems.length === 0 ? (
               <tr>
-                <td colSpan={2} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={3} className="px-4 py-8 text-center text-slate-500">
                   <i className="fas fa-list text-4xl mb-2 text-slate-300"></i>
                   <p>No BOM templates found. Create BOMs from the configuration page.</p>
                 </td>
@@ -500,7 +501,8 @@ function BomTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onEdit, 
             ) : (
               pageItems.map((bom, index) => (
                 <tr key={`bom-${meta.startIndex + index}`} className="border-t border-slate-200 hover:bg-blue-50">
-                  <td className="px-4 py-3 text-slate-700 font-medium">{bom.valveName || bom.partName || '-'}</td>
+                  <td className="px-4 py-3 text-slate-700 font-medium">{bom.templateName || bom.displayName || '-'}</td>
+                  <td className="px-4 py-3 text-slate-700">{bom.valveType || '-'}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <button
@@ -535,7 +537,10 @@ function BomTab({ pageItems, meta, currentPage, onPrev, onNext, onPage, onEdit, 
             <div key={`bom-card-${meta.startIndex + index}`} className="mb-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm active:scale-[0.98] active:shadow-md">
               <div className="mb-3 border-b-2 border-slate-200 pb-2 text-[0.95rem] font-semibold text-[#022758]">
                 <i className="fas fa-list mr-2"></i>
-                {bom.valveName || bom.partName || '-'}
+                {bom.templateName || bom.displayName || '-'}
+              </div>
+              <div className="mb-2 text-sm text-slate-700">
+                <span className="font-semibold text-slate-600">Valve Type:</span> {bom.valveType || '-'}
               </div>
               <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200">
                 <button

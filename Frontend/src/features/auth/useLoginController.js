@@ -1,8 +1,13 @@
 import { useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { login } from '../../services/authApi';
+import { setAuthSession } from '../../services/authStorage';
 import { createInitialLoginForm, validateLoginForm } from './login.model';
 
 export default function useLoginController() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [formData, setFormData] = useState(createInitialLoginForm());
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +37,11 @@ export default function useLoginController() {
     event.preventDefault();
     setSubmitError('');
 
+    const fromLocation = location.state?.from;
+    const nextPath = fromLocation
+      ? `${fromLocation.pathname || '/cards'}${fromLocation.search || ''}${fromLocation.hash || ''}`
+      : '/cards';
+
     if (!validate()) {
       return;
     }
@@ -48,10 +58,12 @@ export default function useLoginController() {
         throw new Error(result?.message || 'Unable to login');
       }
 
-      localStorage.setItem('orbitAuthToken', result.data.token);
-      localStorage.setItem('orbitWorker', JSON.stringify(result.data.worker || {}));
+      setAuthSession({
+        token: result.data.token,
+        worker: result.data.worker || {}
+      });
 
-      window.location.href = '/cards';
+      navigate(nextPath, { replace: true });
     } catch (error) {
       const message =
         error?.response?.data?.message || error?.message || 'Login failed. Please try again.';

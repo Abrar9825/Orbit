@@ -1,6 +1,6 @@
 import useCardsController from './useCardsController';
 
-function TopNav({ onSignOut }) {
+function TopNav({ workerName, workerInitial, onSignOut }) {
   return (
     <nav className="sticky top-0 z-20 text-white" style={{ background: 'var(--primary)' }}>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -16,14 +16,14 @@ function TopNav({ onSignOut }) {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="text-sm text-white/90 hidden sm:block">Hello, Admin</div>
+            <div className="text-sm text-white/90 hidden sm:block">Hello, {workerName}</div>
             <button
               onClick={onSignOut}
               className="w-10 h-10 rounded-full bg-white flex items-center justify-center font-semibold shadow hover:scale-105 transition-transform"
               title="Sign out"
               style={{ color: 'var(--primary)' }}
             >
-              A
+              {workerInitial}
             </button>
           </div>
         </div>
@@ -109,11 +109,11 @@ function DashboardCard({ card, onOpen }) {
 }
 
 export default function CardsPage() {
-  const { cards, onOpenCard, onSignOut } = useCardsController();
+  const { cards, workerName, workerInitial, onOpenCard, onSignOut } = useCardsController();
 
   return (
     <div className="min-h-screen overflow-x-hidden overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 font-sans">
-      <TopNav onSignOut={onSignOut} />
+      <TopNav workerName={workerName} workerInitial={workerInitial} onSignOut={onSignOut} />
 
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10">
         <DashboardHeader />

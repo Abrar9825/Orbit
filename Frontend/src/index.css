@@ -20,7 +20,8 @@ body,
 body {
   font-family: 'Poppins', sans-serif;
   background: #ffffff;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 :root {

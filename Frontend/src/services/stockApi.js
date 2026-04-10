@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAuthToken } from './authStorage';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
@@ -8,7 +9,7 @@ const stockClient = axios.create({
 });
 
 function getAuthHeaders() {
-  const token = localStorage.getItem('orbitAuthToken');
+  const token = getAuthToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 

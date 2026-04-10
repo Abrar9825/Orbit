@@ -1,17 +1,17 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_CARDS } from './cards.model';
+import { clearAuthSession, getStoredWorker } from '../../services/authStorage';
 
 export default function useCardsController() {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const token = localStorage.getItem('orbitAuthToken');
-
-    if (!token) {
-      window.location.href = '/';
-    }
+  const workerName = useMemo(() => {
+    const worker = getStoredWorker();
+    return (worker?.userName || worker?.name || 'User').toString();
   }, []);
+
+  const workerInitial = useMemo(() => workerName.trim().charAt(0).toUpperCase() || 'U', [workerName]);
 
   useEffect(() => {
     document.title = 'Dashboard - Orbit';
@@ -25,17 +25,18 @@ export default function useCardsController() {
       return;
     }
 
-    window.location.href = target;
+    window.location.assign(target);
   };
 
   const onSignOut = () => {
-    localStorage.removeItem('orbitAuthToken');
-    localStorage.removeItem('orbitWorker');
-    window.location.href = '/';
+    clearAuthSession();
+    navigate('/', { replace: true });
   };
 
   return {
     cards,
+    workerName,
+    workerInitial,
     onOpenCard,
     onSignOut
   };

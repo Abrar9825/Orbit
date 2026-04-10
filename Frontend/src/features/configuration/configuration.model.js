@@ -93,7 +93,8 @@ export function createInitialPartState() {
 export function createInitialBomState() {
   return {
     valve: {
-      valveName: '',
+      templateName: '',
+      valveType: '',
       valveSize: '',
       valveClass: '',
       valveMOC: '',

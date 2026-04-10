@@ -1,4 +1,4 @@
-import useConfigurationController from './useConfigurationController';
+import useConfigurationController from './useConfigurationControllerBackend';
 
 function SuccessToast({ message }) {
   if (!message) {
@@ -185,9 +185,14 @@ function MachinesSection({
   );
 }
 
-function PartsSection({ selectedPartCategory, partState, onFieldChange, onSubmit, onReset, isEditMode }) {
-  const isValve = selectedPartCategory === 'valve';
-
+function PartsSection({
+  partState,
+  masterDataOptions,
+  onFieldChange,
+  onSubmit,
+  onReset,
+  isEditMode
+}) {
   return (
     <div className="p-2 sm:p-3">
       <div className="mx-auto max-w-[900px] rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
@@ -197,174 +202,88 @@ function PartsSection({ selectedPartCategory, partState, onFieldChange, onSubmit
         </div>
 
         <div id="partDynamicInputs">
-          {isValve ? (
-            <div className="bg-white p-3 rounded-xl border-2 border-slate-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    ITEM NAME <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={partState.valve.itemName}
-                    onChange={(event) => onFieldChange('valve', 'itemName', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="Enter item name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">MODEL NO</label>
-                  <input
-                    type="text"
-                    value={partState.valve.modelNo}
-                    onChange={(event) => onFieldChange('valve', 'modelNo', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="Enter model number"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    SIZE <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={partState.valve.size}
-                    onChange={(event) => onFieldChange('valve', 'size', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="Enter size"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    MOC <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={partState.valve.moc}
-                    onChange={(event) => onFieldChange('valve', 'moc', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="Material of Construction"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">CLASS</label>
-                  <input
-                    type="text"
-                    value={partState.valve.class}
-                    onChange={(event) => onFieldChange('valve', 'class', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="Enter class"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">REMARK</label>
-                  <input
-                    type="text"
-                    value={partState.valve.remark}
-                    onChange={(event) => onFieldChange('valve', 'remark', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="Enter remark"
-                  />
-                </div>
+          <div className="bg-white p-3 rounded-xl border-2 border-slate-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  ITEM NAME <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={partState.valve.itemName}
+                  onChange={(event) => onFieldChange('valve', 'itemName', event.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  placeholder="Enter item name"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">MODEL NO</label>
+                <input
+                  type="text"
+                  value={partState.valve.modelNo}
+                  onChange={(event) => onFieldChange('valve', 'modelNo', event.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  placeholder="Enter model number"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  SIZE <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={partState.valve.size}
+                  onChange={(event) => onFieldChange('valve', 'size', event.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all"
+                >
+                  <option value="">Select size</option>
+                  {(masterDataOptions?.sizes || []).map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  MOC <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={partState.valve.moc}
+                  onChange={(event) => onFieldChange('valve', 'moc', event.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  placeholder="Material of Construction"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">CLASS</label>
+                <select
+                  value={partState.valve.class}
+                  onChange={(event) => onFieldChange('valve', 'class', event.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all"
+                >
+                  <option value="">Select class</option>
+                  {(masterDataOptions?.classes || []).map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">REMARK</label>
+                <input
+                  type="text"
+                  value={partState.valve.remark}
+                  onChange={(event) => onFieldChange('valve', 'remark', event.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  placeholder="Enter remark"
+                />
               </div>
             </div>
-          ) : (
-            <div className="bg-white p-3 rounded-xl border-2 border-slate-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    ITEM <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={partState.parts.item}
-                    onChange={(event) => onFieldChange('parts', 'item', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="Enter item name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">EQUIPMENT</label>
-                  <input
-                    type="text"
-                    value={partState.parts.equipment}
-                    onChange={(event) => onFieldChange('parts', 'equipment', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="Equipment name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    MOC <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={partState.parts.moc}
-                    onChange={(event) => onFieldChange('parts', 'moc', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="Material of Construction"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">REMARKS</label>
-                  <input
-                    type="text"
-                    value={partState.parts.remarks}
-                    onChange={(event) => onFieldChange('parts', 'remarks', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="Remarks"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    QTY <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={partState.parts.qty}
-                    onChange={(event) => onFieldChange('parts', 'qty', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">INVOICE</label>
-                  <input
-                    type="text"
-                    value={partState.parts.invoice}
-                    onChange={(event) => onFieldChange('parts', 'invoice', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="Invoice number"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">PARTY</label>
-                  <input
-                    type="text"
-                    value={partState.parts.party}
-                    onChange={(event) => onFieldChange('parts', 'party', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="Party name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">DATE</label>
-                  <input
-                    type="date"
-                    value={partState.parts.date}
-                    onChange={(event) => onFieldChange('parts', 'date', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2 mt-3">
@@ -389,9 +308,10 @@ function PartsSection({ selectedPartCategory, partState, onFieldChange, onSubmit
 }
 
 function BomSection({
-  selectedBomType,
   bomState,
   bomParts,
+  partOptions,
+  masterDataOptions,
   onBomField,
   onAddPart,
   onRemovePart,
@@ -400,8 +320,6 @@ function BomSection({
   onReset,
   isEditMode
 }) {
-  const isValve = selectedBomType === 'valve';
-
   return (
     <div className="p-2 sm:p-3">
       <div className="mx-auto max-w-[900px] rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
@@ -411,53 +329,65 @@ function BomSection({
         </div>
 
         <div id="bomDynamicInputs" className="mb-4">
-          {isValve ? (
-            <div className="bg-white p-3 rounded-xl border-2 border-slate-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block mb-1.5 text-xs font-semibold text-slate-600">
-                    Valve Name <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={bomState.valve.valveName}
-                    onChange={(event) => onBomField('valve', 'valveName', event.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all"
-                  >
-                    <option value="">Select valve type</option>
-                    <option value="Butterfly Valve">Butterfly Valve</option>
-                    <option value="Dual Plate Check Valve">Dual Plate Check Valve</option>
-                    <option value="Air Valve">Air Valve</option>
-                    <option value="Sluice Valve">Sluice Valve</option>
-                    <option value="Non Return Valve">Non Return Valve</option>
-                    <option value="Flow Control Valve">Flow Control Valve</option>
-                    <option value="Pressure Reducing Valve">Pressure Reducing Valve</option>
-                    <option value="Altitude Control Valve">Altitude Control Valve</option>
-                    <option value="On/Off Valve">On/Off Valve</option>
-                  </select>
-                </div>
+          <div className="bg-white p-3 rounded-xl border-2 border-slate-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block mb-1.5 text-xs font-semibold text-slate-600">
+                  Template Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={bomState.valve.templateName}
+                  onChange={(event) => onBomField('valve', 'templateName', event.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter template name"
+                />
+              </div>
+              <div>
+                <label className="block mb-1.5 text-xs font-semibold text-slate-600">
+                  Valve Type <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={bomState.valve.valveType}
+                  onChange={(event) => onBomField('valve', 'valveType', event.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter valve type"
+                />
+              </div>
                 <div>
                   <label className="block mb-1.5 text-xs font-semibold text-slate-600">
                     Size <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={bomState.valve.valveSize}
                     onChange={(event) => onBomField('valve', 'valveSize', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter size"
-                  />
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all"
+                  >
+                    <option value="">Select size</option>
+                    {(masterDataOptions?.sizes || []).map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block mb-1.5 text-xs font-semibold text-slate-600">
                     Class <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={bomState.valve.valveClass}
                     onChange={(event) => onBomField('valve', 'valveClass', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter class"
-                  />
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all"
+                  >
+                    <option value="">Select class</option>
+                    {(masterDataOptions?.classes || []).map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block mb-1.5 text-xs font-semibold text-slate-600">
@@ -475,13 +405,18 @@ function BomSection({
                   <label className="block mb-1.5 text-xs font-semibold text-slate-600">
                     End Connection <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={bomState.valve.valveEndConnection}
                     onChange={(event) => onBomField('valve', 'valveEndConnection', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter end connection"
-                  />
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all"
+                  >
+                    <option value="">Select end connection</option>
+                    {(masterDataOptions?.endConnections || []).map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block mb-1.5 text-xs font-semibold text-slate-600">
@@ -512,58 +447,6 @@ function BomSection({
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="bg-white p-3 rounded-xl border-2 border-slate-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block mb-1.5 text-xs font-semibold text-slate-600">
-                    Part Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={bomState.parts.partName}
-                    onChange={(event) => onBomField('parts', 'partName', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter part name"
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1.5 text-xs font-semibold text-slate-600">
-                    Size <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={bomState.parts.partSize}
-                    onChange={(event) => onBomField('parts', 'partSize', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter size"
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1.5 text-xs font-semibold text-slate-600">
-                    Quantity <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={bomState.parts.partQuantity}
-                    onChange={(event) => onBomField('parts', 'partQuantity', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1.5 text-xs font-semibold text-slate-600">Remarks</label>
-                  <input
-                    type="text"
-                    value={bomState.parts.partRemarks}
-                    onChange={(event) => onBomField('parts', 'partRemarks', event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter remarks"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         <div id="bomPartsContainer" className="mb-4 space-y-3">
@@ -584,25 +467,18 @@ function BomSection({
                   <label className="block mb-1 text-xs font-medium text-gray-700">
                     Part Name <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Enter part name"
-                    value={row.partName}
-                    onChange={(event) => onPartField(row.id, 'partName', event.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 text-xs font-medium text-gray-700">
-                    Size <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter size"
-                    value={row.size}
-                    onChange={(event) => onPartField(row.id, 'size', event.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  />
+                  <select
+                    value={row.partId}
+                    onChange={(event) => onPartField(row.id, 'partId', event.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all"
+                  >
+                    <option value="">Select part</option>
+                    {(partOptions || []).map((part) => (
+                      <option key={part._id} value={part._id}>
+                        {part.itemName}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block mb-1 text-xs font-medium text-gray-700">
@@ -613,6 +489,16 @@ function BomSection({
                     placeholder="Enter quantity"
                     value={row.quantity}
                     onChange={(event) => onPartField(row.id, 'quantity', event.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-xs font-medium text-gray-700">Remark</label>
+                  <input
+                    type="text"
+                    placeholder="Enter remark"
+                    value={row.remark || ''}
+                    onChange={(event) => onPartField(row.id, 'remark', event.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                   />
                 </div>
@@ -708,8 +594,8 @@ function UsersSection({
                 <label className="block text-xs font-medium text-gray-700 mb-1.5">Password</label>
                 <input
                   type="password"
-                  required
-                  placeholder="Enter password"
+                  required={!isEditMode}
+                  placeholder={isEditMode ? 'Leave blank to keep current password' : 'Enter password'}
                   value={userForm.password}
                   onChange={(event) => onUserField('password', event.target.value)}
                   className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-gray-700 text-sm focus:outline-none focus:border-[var(--primary)] transition-all"
@@ -1007,8 +893,8 @@ export default function ConfigurationPage() {
 
         <div className={controller.activeTab === 'parts' ? '' : 'hidden'}>
           <PartsSection
-            selectedPartCategory={controller.selectedPartCategory}
             partState={controller.partState}
+            masterDataOptions={controller.masterDataOptions}
             onFieldChange={controller.setPartField}
             onSubmit={controller.handleAddPart}
             onReset={controller.resetPartForm}
@@ -1018,9 +904,10 @@ export default function ConfigurationPage() {
 
         <div className={controller.activeTab === 'bom' ? '' : 'hidden'}>
           <BomSection
-            selectedBomType={controller.selectedBomType}
             bomState={controller.bomState}
             bomParts={controller.bomParts}
+            partOptions={controller.availableParts}
+            masterDataOptions={controller.masterDataOptions}
             onBomField={controller.setBomField}
             onAddPart={controller.addBomPart}
             onRemovePart={controller.removeBomPart}
