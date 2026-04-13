@@ -63,22 +63,21 @@ function DesktopTable({ controller }) {
       <table className="w-full table-fixed text-xs">
         <thead className="bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white">
           <tr>
-            <th className="px-3 py-3 text-left text-xs font-bold uppercase">Asset Type</th>
-            <th className="px-3 py-3 text-left text-xs font-bold uppercase">Item Name</th>
-            <th className="px-3 py-3 text-left text-xs font-bold uppercase">Serial No</th>
+            <th className="px-3 py-3 text-left text-xs font-bold uppercase">Asset</th>
+            <th className="px-3 py-3 text-left text-xs font-bold uppercase">Item/Equip</th>
+            <th className="px-3 py-3 text-left text-xs font-bold uppercase">Sr#</th>
             <th className="px-3 py-3 text-left text-xs font-bold uppercase">MOC</th>
             <th className="px-3 py-3 text-left text-xs font-bold uppercase">Size</th>
             <th className="px-3 py-3 text-left text-xs font-bold uppercase">Qty</th>
-            <th className="px-3 py-3 text-left text-xs font-bold uppercase">Status</th>
-            <th className="px-3 py-3 text-left text-xs font-bold uppercase">Present Location</th>
-            <th className="px-3 py-3 text-left text-xs font-bold uppercase">Remarks</th>
-            <th className="px-3 py-3 text-left text-xs font-bold uppercase">Action</th>
+            <th className="px-3 py-3 text-left text-xs font-bold uppercase">Sts</th>
+            <th className="px-3 py-3 text-left text-xs font-bold uppercase">Rmk</th>
+            <th className="px-3 py-3 text-left text-xs font-bold uppercase">Act</th>
           </tr>
         </thead>
         <tbody>
           {controller.pageRows.length === 0 ? (
             <tr>
-              <td colSpan={10} className="px-3 py-8 text-center text-slate-500">No pattern rows found.</td>
+              <td colSpan={9} className="px-3 py-8 text-center text-slate-500">No pattern rows found.</td>
             </tr>
           ) : (
             controller.pageRows.map((row) => (
@@ -94,21 +93,24 @@ function DesktopTable({ controller }) {
                     {row.status || '-'}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-xs text-slate-600">{row.presentLocation || '-'}</td>
                 <td className="px-3 py-2 text-xs text-slate-600">{row.remarks || '-'}</td>
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-1.5">
                     <button
-                      className="rounded-md bg-blue-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-600"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-blue-500 text-white hover:bg-blue-600"
                       onClick={() => controller.onEdit(row.id)}
+                      title="Edit"
+                      aria-label="Edit"
                     >
-                      Edit
+                      <i className="fas fa-pen text-[11px]"></i>
                     </button>
                     <button
-                      className="rounded-md bg-red-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-red-600"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-red-500 text-white hover:bg-red-600"
                       onClick={() => controller.onDelete(row.id)}
+                      title="Delete"
+                      aria-label="Delete"
                     >
-                      Delete
+                      <i className="fas fa-trash-can text-[11px]"></i>
                     </button>
                   </div>
                 </td>
@@ -125,23 +127,24 @@ function DesktopTable({ controller }) {
       <thead className="bg-gradient-to-r from-[#022758] to-[#1a3a5c] text-white">
         <tr>
           <th className="px-3 py-3 text-left text-xs font-bold uppercase">Item</th>
-          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Model No</th>
+          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Model</th>
           <th className="px-3 py-3 text-left text-xs font-bold uppercase">MRN No</th>
           <th className="px-3 py-3 text-left text-xs font-bold uppercase">Size</th>
           <th className="px-3 py-3 text-left text-xs font-bold uppercase">MOC</th>
-          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Class</th>
+          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Cls</th>
           <th className="px-3 py-3 text-left text-xs font-bold uppercase">Qty</th>
-          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Invoice No</th>
-          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Source Party</th>
-          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Date</th>
-          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Present Location</th>
-          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Action</th>
+          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Inv No</th>
+          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Src Pty</th>
+          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Dt</th>
+          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Loc</th>
+          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Rmk</th>
+          <th className="px-3 py-3 text-left text-xs font-bold uppercase">Act</th>
         </tr>
       </thead>
       <tbody>
         {controller.pageRows.length === 0 ? (
           <tr>
-            <td colSpan={12} className="px-3 py-8 text-center text-slate-500">No stock rows found.</td>
+            <td colSpan={13} className="px-3 py-8 text-center text-slate-500">No stock rows found.</td>
           </tr>
         ) : (
           controller.pageRows.map((row) => (
@@ -157,19 +160,24 @@ function DesktopTable({ controller }) {
               <td className="px-3 py-2 text-xs text-slate-600">{row.sourceParty}</td>
               <td className="px-3 py-2 text-xs text-slate-600">{controller.formatDate(row.date)}</td>
               <td className="px-3 py-2 text-xs text-slate-600">{row.presentLocation}</td>
+              <td className="px-3 py-2 text-xs text-slate-600">{row.remarks || '-'}</td>
               <td className="px-3 py-2">
                 <div className="flex items-center gap-1.5">
                   <button
-                    className="rounded-md bg-blue-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-600"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-blue-500 text-white hover:bg-blue-600"
                     onClick={() => controller.onEdit(row.id)}
+                    title="Edit"
+                    aria-label="Edit"
                   >
-                    Edit
+                    <i className="fas fa-pen text-[11px]"></i>
                   </button>
                   <button
-                    className="rounded-md bg-red-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-red-600"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-red-500 text-white hover:bg-red-600"
                     onClick={() => controller.onDelete(row.id)}
+                    title="Delete"
+                    aria-label="Delete"
                   >
-                    Delete
+                    <i className="fas fa-trash-can text-[11px]"></i>
                   </button>
                 </div>
               </td>
@@ -287,12 +295,15 @@ export default function StockManagementPage() {
                   ) : controller.activeTab === 'pattern' ? (
                     <div className="space-y-1 text-xs text-slate-600">
                       <p>{row.assetType || '-'} • {row.serialNo || '-'} • Qty {controller.formatNumber(row.qty)}</p>
-                      <p>{row.presentLocation || '-'} • {row.remarks || '-'}</p>
+                      <p>Status {row.status || '-'} • {row.remarks || '-'}</p>
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-600">
-                      {row.modelNo || '-'} • MRN {row.mrnNo || '-'} • Qty {controller.formatNumber(row.qty)}
-                    </p>
+                    <div className="space-y-1 text-xs text-slate-600">
+                      <p>{row.modelNo || '-'} • MRN {row.mrnNo || '-'} • {row.size || '-'}</p>
+                      <p>{row.moc || '-'} • {row.className || '-'} • Qty {controller.formatNumber(row.qty)}</p>
+                      <p>{row.invoiceNo || '-'} • {row.sourceParty || '-'}</p>
+                      <p>{controller.formatDate(row.date)} • {row.presentLocation || '-'}</p>
+                    </div>
                   )}
                   <div className="mt-3 flex justify-end gap-2">
                     {controller.activeTab === 'po' ? (
@@ -304,11 +315,21 @@ export default function StockManagementPage() {
                       </button>
                     ) : (
                       <>
-                        <button className="rounded-md bg-blue-500 px-2.5 py-1 text-xs font-semibold text-white" onClick={() => controller.onEdit(row.id)}>
-                          Edit
+                        <button
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-blue-500 text-white"
+                          onClick={() => controller.onEdit(row.id)}
+                          title="Edit"
+                          aria-label="Edit"
+                        >
+                          <i className="fas fa-pen text-[11px]"></i>
                         </button>
-                        <button className="rounded-md bg-red-500 px-2.5 py-1 text-xs font-semibold text-white" onClick={() => controller.onDelete(row.id)}>
-                          Delete
+                        <button
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-red-500 text-white"
+                          onClick={() => controller.onDelete(row.id)}
+                          title="Delete"
+                          aria-label="Delete"
+                        >
+                          <i className="fas fa-trash-can text-[11px]"></i>
                         </button>
                       </>
                     )}
