@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getAuthToken } from './authStorage';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const stockClient = axios.create({
   baseURL: API_BASE_URL,
@@ -14,6 +14,10 @@ function getAuthHeaders() {
 }
 
 function getErrorMessage(error, fallback) {
+  if (error?.code === 'ERR_NETWORK' || !error?.response) {
+    return 'Backend server is unreachable. Start Backend with npm run dev.';
+  }
+
   return error?.response?.data?.message || error?.message || fallback;
 }
 
@@ -26,6 +30,17 @@ export async function getStockList(params = {}) {
     return response.data;
   } catch (error) {
     throw new Error(getErrorMessage(error, 'Unable to fetch stock list'));
+  }
+}
+
+export async function getStockSummary() {
+  try {
+    const response = await stockClient.get('/stock/summary', {
+      headers: getAuthHeaders()
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error, 'Unable to fetch stock summary'));
   }
 }
 
@@ -73,9 +88,13 @@ export async function deleteStock(id) {
   }
 }
 
-export async function getPartsList() {
+export async function getPartsList(params = {}) {
   try {
-    const response = await stockClient.get('/parts', {
+    const query = params && typeof params === 'object' ? params : {};
+    const shouldSearch = Boolean(query.q);
+
+    const response = await stockClient.get(shouldSearch ? '/parts/search' : '/parts', {
+      params: shouldSearch ? query : undefined,
       headers: getAuthHeaders()
     });
     return response.data;

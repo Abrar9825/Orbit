@@ -85,6 +85,19 @@ const stockSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    serialNo: {
+      type: String,
+      trim: true,
+    },
+    status: {
+      type: String,
+      trim: true,
+      default: 'Operational',
+    },
+    presentLocation: {
+      type: String,
+      trim: true,
+    },
     sourceInvoiceNo: {
       type: String,
       trim: true,

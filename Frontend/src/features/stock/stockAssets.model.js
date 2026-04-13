@@ -1,17 +1,16 @@
 export function createInitialPartForm() {
   return {
     partId: '',
-    openingQty: '',
-    minStockLevel: '',
-    reorderQty: '',
-    plan: '',
-    committed: '',
-    sourceInvoiceNo: '',
+    modelNo: '',
+    mrnNo: '',
+    size: '',
+    moc: '',
+    className: '',
+    qty: '',
+    invoiceNo: '',
     sourceParty: '',
-    workOrderNumber: '',
-    referenceNumber: '',
-    sourcePONumber: '',
-    stockDate: '',
+    date: '',
+    presentLocation: '',
     remarks: ''
   };
 }
@@ -19,17 +18,13 @@ export function createInitialPartForm() {
 export function createInitialValveForm() {
   return {
     bomId: '',
-    openingQty: '',
-    minStockLevel: '',
-    reorderQty: '',
-    plan: '',
-    committed: '',
-    sourceInvoiceNo: '',
-    sourceParty: '',
-    workOrderNumber: '',
-    referenceNumber: '',
-    sourcePONumber: '',
-    stockDate: '',
+    assetType: '',
+    itemName: '',
+    serialNo: '',
+    moc: '',
+    size: '',
+    qty: '',
+    status: 'Operational',
     remarks: ''
   };
 }
@@ -44,49 +39,54 @@ export function toNumberOrZero(value) {
 }
 
 export function toPayloadFromPart(form) {
-  const openingQty = toNumberOrZero(form.openingQty);
-  const committed = Math.min(toNumberOrZero(form.committed), openingQty);
+  const qty = Math.max(toNumberOrZero(form.qty), 1);
 
   return {
     itemType: 'PART',
     partId: form.partId,
-    openingQty,
-    qtyOnHand: openingQty,
-    minStockLevel: toNumberOrZero(form.minStockLevel),
-    reorderQty: toNumberOrZero(form.reorderQty),
-    plan: toNumberOrZero(form.plan),
-    committed,
-    available: Math.max(openingQty - committed, 0),
-    sourceInvoiceNo: form.sourceInvoiceNo.trim(),
+    openingQty: qty,
+    qtyOnHand: qty,
+    minStockLevel: 0,
+    reorderQty: 0,
+    plan: 0,
+    committed: 0,
+    available: qty,
+    sourceInvoiceNo: (form.invoiceNo || '').trim(),
     sourceParty: form.sourceParty.trim(),
-    workOrderNumber: form.workOrderNumber.trim(),
-    referenceNumber: form.referenceNumber.trim(),
-    sourcePONumber: form.sourcePONumber.trim(),
-    stockDate: form.stockDate || undefined,
+    referenceNumber: (form.mrnNo || '').trim(),
+    stockDate: form.date || undefined,
+    presentLocation: (form.presentLocation || '').trim(),
     remarks: form.remarks.trim()
   };
 }
 
 export function toPayloadFromValve(form) {
-  const openingQty = toNumberOrZero(form.openingQty);
-  const committed = Math.min(toNumberOrZero(form.committed), openingQty);
+  const qty = Math.max(toNumberOrZero(form.qty), 1);
+  const cleanedBomId = String(form.bomId || '').trim();
+  const cleanedItemName = (form.itemName || '').trim();
+  const cleanedAssetType = (form.assetType || '').trim();
 
-  return {
+  const payload = {
     itemType: 'VALVE',
-    bomId: form.bomId,
-    openingQty,
-    qtyOnHand: openingQty,
-    minStockLevel: toNumberOrZero(form.minStockLevel),
-    reorderQty: toNumberOrZero(form.reorderQty),
-    plan: toNumberOrZero(form.plan),
-    committed,
-    available: Math.max(openingQty - committed, 0),
-    sourceInvoiceNo: form.sourceInvoiceNo.trim(),
-    sourceParty: form.sourceParty.trim(),
-    workOrderNumber: form.workOrderNumber.trim(),
-    referenceNumber: form.referenceNumber.trim(),
-    sourcePONumber: form.sourcePONumber.trim(),
-    stockDate: form.stockDate || undefined,
+    itemName: cleanedItemName,
+    valveType: cleanedAssetType || cleanedItemName,
+    size: (form.size || '').trim(),
+    openingQty: qty,
+    qtyOnHand: qty,
+    minStockLevel: 0,
+    reorderQty: 0,
+    plan: 0,
+    committed: 0,
+    available: qty,
+    serialNo: (form.serialNo || '').trim(),
+    moc: (form.moc || '').trim(),
+    status: (form.status || 'Operational').trim(),
     remarks: form.remarks.trim()
   };
+
+  if (cleanedBomId) {
+    payload.bomId = cleanedBomId;
+  }
+
+  return payload;
 }

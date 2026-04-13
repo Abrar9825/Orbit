@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getAuthToken } from './authStorage';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const configurationClient = axios.create({
   baseURL: API_BASE_URL,
@@ -14,6 +14,10 @@ function getAuthHeaders() {
 }
 
 function getErrorMessage(error, fallback) {
+  if (error?.code === 'ERR_NETWORK' || !error?.response) {
+    return 'Backend server is unreachable. Start Backend with npm run dev.';
+  }
+
   return error?.response?.data?.message || error?.message || fallback;
 }
 

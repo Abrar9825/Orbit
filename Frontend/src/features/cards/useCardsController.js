@@ -3,6 +3,30 @@ import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_CARDS } from './cards.model';
 import { clearAuthSession, getStoredWorker } from '../../services/authStorage';
 
+const LEGACY_ROUTE_MAP = {
+  '07_stock_management.html': '/stock',
+  '/07_stock_management.html': '/stock',
+  '03_stock_assets.html': '/stock/assets',
+  '/03_stock_assets.html': '/stock/assets',
+  '10_configuration.html': '/configuration',
+  '/10_configuration.html': '/configuration',
+  '10.1_configuration_view.html': '/configuration/view',
+  '/10.1_configuration_view.html': '/configuration/view'
+};
+
+function resolveCardTarget(target) {
+  if (typeof target !== 'string') {
+    return '';
+  }
+
+  const trimmedTarget = target.trim();
+  if (!trimmedTarget) {
+    return '';
+  }
+
+  return LEGACY_ROUTE_MAP[trimmedTarget] || trimmedTarget;
+}
+
 export default function useCardsController() {
   const navigate = useNavigate();
 
@@ -20,12 +44,16 @@ export default function useCardsController() {
   const cards = useMemo(() => DASHBOARD_CARDS, []);
 
   const onOpenCard = (target) => {
-    if (typeof target === 'string' && target.startsWith('/')) {
-      navigate(target);
+    const resolvedTarget = resolveCardTarget(target);
+
+    if (resolvedTarget.startsWith('/')) {
+      navigate(resolvedTarget);
       return;
     }
 
-    window.location.assign(target);
+    if (resolvedTarget) {
+      window.location.assign(resolvedTarget);
+    }
   };
 
   const onSignOut = () => {

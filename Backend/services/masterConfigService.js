@@ -70,10 +70,6 @@ async function addMasterConfigValue(key, value) {
     {
       $setOnInsert: {
         singletonKey: 'GLOBAL',
-        endConnections: [],
-        classes: [],
-        sizes: [],
-        units: [],
       },
       $addToSet: {
         [key]: trimmedValue,
@@ -86,6 +82,53 @@ async function addMasterConfigValue(key, value) {
   await doc.save();
 
   return getMasterConfigDocument();
+}
+
+async function setMasterConfigValues(payload = {}) {
+  const updates = {};
+
+  ALLOWED_KEYS.forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(payload, key)) {
+      updates[key] = sanitizeArray(payload[key]);
+    }
+  });
+
+  if (!Object.keys(updates).length) {
+    const error = new Error(`At least one key is required. Allowed keys: ${ALLOWED_KEYS.join(', ')}`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  await MasterConfig.findOneAndUpdate(
+    { singletonKey: 'GLOBAL' },
+    {
+      $setOnInsert: {
+        singletonKey: 'GLOBAL',
+      },
+      $set: updates,
+    },
+    { new: true, upsert: true }
+  );
+
+  return getMasterConfigDocument();
+}
+
+async function removeMasterConfigValue(key, value) {
+  ensureAllowedKey(key);
+
+  const trimmedValue = String(value || '').trim();
+  if (!trimmedValue) {
+    const error = new Error('Value is required');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const currentConfig = await getMasterConfigDocument();
+  const nextValues = (currentConfig[key] || []).filter(
+    (item) => normalizeMasterValue(item) !== normalizeMasterValue(trimmedValue)
+  );
+
+  return setMasterConfigValues({ [key]: nextValues });
 }
 
 async function isMasterValueAllowed(key, value, options = {}) {
@@ -106,5 +149,7 @@ module.exports = {
   ALLOWED_KEYS,
   getMasterConfigDocument,
   addMasterConfigValue,
+  setMasterConfigValues,
+  removeMasterConfigValue,
   isMasterValueAllowed,
 };

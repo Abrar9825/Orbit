@@ -13,7 +13,16 @@ const partsSchema = new mongoose.Schema(
       trim: true,
       index: true,
     },
+    category: {
+      type: String,
+      trim: true,
+      default: 'Valve',
+    },
     modelNumber: {
+      type: String,
+      trim: true,
+    },
+    equipment: {
       type: String,
       trim: true,
     },
@@ -38,6 +47,23 @@ const partsSchema = new mongoose.Schema(
       trim: true,
     },
     remarks: {
+      type: String,
+      trim: true,
+    },
+    quantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    invoice: {
+      type: String,
+      trim: true,
+    },
+    party: {
+      type: String,
+      trim: true,
+    },
+    date: {
       type: String,
       trim: true,
     },

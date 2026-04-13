@@ -18,6 +18,19 @@ function sanitizeDynamicValues(rawValues, fields) {
   }, {});
 }
 
+function parseQuantity(value) {
+  if (value === undefined || value === null || value === '') {
+    return 0;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+
+  return Math.max(parsed, 0);
+}
+
 async function getPartTemplates(req, res) {
   return res.status(200).json({
     status: 'success',
@@ -30,13 +43,19 @@ async function createPart(req, res) {
   try {
     const {
       itemName,
+      category,
       modelNumber,
+      equipment,
       size,
       length,
       moc,
       endConnection,
       class: className,
       remarks,
+      quantity,
+      invoice,
+      party,
+      date,
       dynamicValues,
     } = req.body;
 
@@ -74,13 +93,19 @@ async function createPart(req, res) {
     const newPart = new Parts({
       itemKey,
       itemName,
+      category: category || 'Valve',
       modelNumber: modelNumber || undefined,
+      equipment: equipment || undefined,
       size: size || undefined,
       length: length || undefined,
       moc: moc || undefined,
       endConnection: endConnection || undefined,
       class: className || undefined,
       remarks: remarks || undefined,
+      quantity: parseQuantity(quantity),
+      invoice: invoice || undefined,
+      party: party || undefined,
+      date: date || undefined,
       dynamicFields: templateFields,
       dynamicValues: safeDynamicValues,
     });
@@ -154,6 +179,9 @@ async function searchParts(req, res) {
         { moc: regex },
         { endConnection: regex },
         { class: regex },
+        { equipment: regex },
+        { invoice: regex },
+        { party: regex },
       ],
     })
       .sort({ createdAt: -1 })
@@ -175,13 +203,19 @@ async function updatePart(req, res) {
     const { id } = req.params;
     const {
       itemName,
+      category,
       modelNumber,
+      equipment,
       size,
       length,
       moc,
       endConnection,
       class: className,
       remarks,
+      quantity,
+      invoice,
+      party,
+      date,
       dynamicValues,
     } = req.body;
 
@@ -220,13 +254,19 @@ async function updatePart(req, res) {
 
     part.itemName = itemName;
     part.itemKey = toItemKey(itemName);
-    part.modelNumber = modelNumber || part.modelNumber;
-    part.size = size || part.size;
-    part.length = length || part.length;
-    part.moc = moc || part.moc;
-    part.endConnection = endConnection || part.endConnection;
-    part.class = className || part.class;
-    part.remarks = remarks || part.remarks;
+    part.category = category || part.category;
+    if (modelNumber !== undefined) part.modelNumber = modelNumber;
+    if (equipment !== undefined) part.equipment = equipment;
+    if (size !== undefined) part.size = size;
+    if (length !== undefined) part.length = length;
+    if (moc !== undefined) part.moc = moc;
+    if (endConnection !== undefined) part.endConnection = endConnection;
+    if (className !== undefined) part.class = className;
+    if (remarks !== undefined) part.remarks = remarks;
+    if (quantity !== undefined) part.quantity = parseQuantity(quantity);
+    if (invoice !== undefined) part.invoice = invoice;
+    if (party !== undefined) part.party = party;
+    if (date !== undefined) part.date = date;
 
     const templateFields = PART_TEMPLATES[part.itemKey] || [];
     part.dynamicFields = templateFields;

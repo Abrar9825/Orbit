@@ -3,6 +3,8 @@ const Stock = require('../models/Stock');
 const Parts = require('../models/Parts');
 const BOM = require('../models/BOM');
 
+const VALVE_STATUSES = ['Operational', 'Under Maintenance'];
+
 function escapeRegex(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -38,14 +40,26 @@ function parseNonNegativeNumber(value, fallback = 0) {
   return Math.max(parsed, 0);
 }
 
+function normalizeValveStatus(value) {
+  return cleanText(value) || 'Operational';
+}
+
+function isValidValveStatus(value) {
+  return VALVE_STATUSES.includes(value);
+}
+
 async function createStock(req, res) {
   try {
     const {
       itemType,
       partId,
       bomId,
+      itemName: payloadItemName,
+      valveType: payloadValveType,
+      size: payloadSize,
+      endConnection: payloadEndConnection,
+      class: payloadClass,
       openingQty,
-      qtyOnHand,
       minStockLevel,
       reorderQty,
       plan,
@@ -60,7 +74,28 @@ async function createStock(req, res) {
       referenceNumber,
       sourcePONumber,
       stockDate,
+      qtyOnHand: payloadQtyOnHand,
+      serialNo,
+      status,
+      presentLocation,
+      moc: payloadMoc,
     } = req.body;
+
+    const cleanedReferenceNumber = cleanText(referenceNumber);
+    const cleanedSourceInvoiceNo = cleanText(sourceInvoiceNo);
+    const cleanedSourceParty = cleanText(sourceParty);
+    const cleanedPresentLocation = cleanText(presentLocation);
+    const parsedStockDate = parseOptionalDate(stockDate);
+
+    const requestedQtyRaw = payloadQtyOnHand === undefined ? openingQty : payloadQtyOnHand;
+    const requestedQty = parseNonNegativeNumber(requestedQtyRaw, 0);
+
+    if (requestedQty <= 0) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Qty must be greater than 0',
+      });
+    }
 
     if (!itemType || !['PART', 'VALVE'].includes(itemType)) {
       return res.status(400).json({
@@ -76,9 +111,44 @@ async function createStock(req, res) {
         return res.status(400).json({ status: 'error', message: 'Valid partId is required for PART stock' });
       }
 
+      if (!cleanedReferenceNumber) {
+        return res.status(400).json({ status: 'error', message: 'MRN No. is required for stock item' });
+      }
+
+      if (!cleanedSourceInvoiceNo) {
+        return res.status(400).json({ status: 'error', message: 'Invoice Number is required for stock item' });
+      }
+
+      if (!cleanedSourceParty) {
+        return res.status(400).json({ status: 'error', message: 'Source Party is required for stock item' });
+      }
+
+      if (!parsedStockDate) {
+        return res.status(400).json({ status: 'error', message: 'Valid Date is required for stock item' });
+      }
+
+      if (!cleanedPresentLocation) {
+        return res.status(400).json({ status: 'error', message: 'Present Location is required for stock item' });
+      }
+
       const part = await Parts.findOne({ _id: partId, isActive: true });
       if (!part) {
         return res.status(404).json({ status: 'error', message: 'Part not found or inactive' });
+      }
+
+      const requiredPartMeta = [
+        { key: 'size', label: 'Size' },
+        { key: 'moc', label: 'MOC' },
+        { key: 'class', label: 'Class' },
+      ].filter((entry) => !cleanText(part[entry.key]));
+
+      if (requiredPartMeta.length) {
+        return res.status(400).json({
+          status: 'error',
+          message: `Selected part is missing required values: ${requiredPartMeta
+            .map((entry) => entry.label)
+            .join(', ')}`,
+        });
       }
 
       stockData = {
@@ -92,34 +162,66 @@ async function createStock(req, res) {
         class: part.class,
       };
     } else {
-      if (!bomId || !mongoose.Types.ObjectId.isValid(bomId)) {
-        return res.status(400).json({ status: 'error', message: 'Valid bomId is required for VALVE stock' });
+      const normalizedStatus = normalizeValveStatus(status);
+      if (!isValidValveStatus(normalizedStatus)) {
+        return res.status(400).json({
+          status: 'error',
+          message: `Status must be one of: ${VALVE_STATUSES.join(', ')}`,
+        });
       }
 
-      const bom = await BOM.findOne({ _id: bomId, isActive: true });
-      if (!bom) {
-        return res.status(404).json({ status: 'error', message: 'BOM not found or inactive' });
-      }
+      const cleanedItemName = cleanText(payloadItemName);
+      const cleanedValveType = cleanText(payloadValveType);
+      const cleanedSize = cleanText(payloadSize);
+      const cleanedEndConnection = cleanText(payloadEndConnection);
+      const cleanedClass = cleanText(payloadClass);
 
-      stockData = {
-        itemType,
-        bomId: bom._id,
-        itemName: bom.templateName,
-        valveType: bom.valveType,
-        size: bom.size,
-        endConnection: bom.endConnection,
-        class: bom.class,
-        unit: bom.unit,
-      };
+      if (bomId) {
+        if (!mongoose.Types.ObjectId.isValid(bomId)) {
+          return res.status(400).json({ status: 'error', message: 'bomId must be a valid ID' });
+        }
+
+        const bom = await BOM.findOne({ _id: bomId, isActive: true });
+        if (!bom) {
+          return res.status(404).json({ status: 'error', message: 'BOM not found or inactive' });
+        }
+
+        stockData = {
+          itemType,
+          bomId: bom._id,
+          itemName: cleanedItemName || bom.templateName,
+          valveType: cleanedValveType || bom.valveType,
+          size: cleanedSize || bom.size,
+          moc: cleanText(payloadMoc),
+          endConnection: cleanedEndConnection || bom.endConnection,
+          class: cleanedClass || bom.class,
+          unit: bom.unit,
+          status: normalizedStatus,
+        };
+      } else {
+        if (!cleanedItemName) {
+          return res.status(400).json({
+            status: 'error',
+            message: 'Item / Equipment Name is required for pattern item',
+          });
+        }
+
+        stockData = {
+          itemType,
+          itemName: cleanedItemName,
+          valveType: cleanedValveType || cleanedItemName,
+          size: cleanedSize,
+          moc: cleanText(payloadMoc),
+          endConnection: cleanedEndConnection,
+          class: cleanedClass,
+          status: normalizedStatus,
+        };
+      }
     }
 
-    const safeQtyOnHand = qtyOnHand === undefined
-      ? parseNonNegativeNumber(openingQty, 0)
-      : parseNonNegativeNumber(qtyOnHand, 0);
+    const safeQtyOnHand = requestedQty;
 
-    const safeOpeningQty = openingQty === undefined
-      ? safeQtyOnHand
-      : parseNonNegativeNumber(openingQty, 0);
+    const safeOpeningQty = openingQty === undefined ? safeQtyOnHand : parseNonNegativeNumber(openingQty, 0);
     const safeCommitted = Math.min(parseNonNegativeNumber(committed, 0), safeQtyOnHand);
     const safeAvailable = available === undefined
       ? Math.max(safeQtyOnHand - safeCommitted, 0)
@@ -150,12 +252,15 @@ async function createStock(req, res) {
       unit: unit || stockData.unit || 'NOS',
       lastPurchasePrice: lastPurchasePrice === undefined ? undefined : Number(lastPurchasePrice),
       remarks: cleanText(remarks),
-      sourceInvoiceNo: cleanText(sourceInvoiceNo),
-      sourceParty: cleanText(sourceParty),
+      sourceInvoiceNo: cleanedSourceInvoiceNo,
+      sourceParty: cleanedSourceParty,
       workOrderNumber: cleanText(workOrderNumber),
-      referenceNumber: cleanText(referenceNumber),
+      referenceNumber: cleanedReferenceNumber,
       sourcePONumber: cleanText(sourcePONumber),
-      stockDate: parseOptionalDate(stockDate),
+      serialNo: cleanText(serialNo),
+      status: itemType === 'VALVE' ? stockData.status : null,
+      presentLocation: cleanedPresentLocation,
+      stockDate: parsedStockDate,
       movements: openingMovements,
     });
 
@@ -210,6 +315,9 @@ async function getAllStock(req, res) {
         { workOrderNumber: regex },
         { referenceNumber: regex },
         { sourcePONumber: regex },
+        { serialNo: regex },
+        { status: regex },
+        { presentLocation: regex },
         { remarks: regex },
       ];
     }
@@ -223,6 +331,76 @@ async function getAllStock(req, res) {
       message: 'Stock fetched successfully',
       count: stock.length,
       data: stock,
+    });
+  } catch (error) {
+    return res.status(500).json({ status: 'error', message: error.message });
+  }
+}
+
+async function getStockSummary(req, res) {
+  try {
+    const [partSummary, valveSummary, activeAssets] = await Promise.all([
+      Stock.aggregate([
+        {
+          $match: {
+            isActive: true,
+            itemType: 'PART',
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalStock: { $sum: 1 },
+            lowStock: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $gt: ['$minStockLevel', 0] },
+                      { $lte: ['$qtyOnHand', '$minStockLevel'] },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+          },
+        },
+      ]),
+      Stock.aggregate([
+        {
+          $match: {
+            isActive: true,
+            itemType: 'VALVE',
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalAssets: { $sum: 1 },
+          },
+        },
+      ]),
+      Stock.countDocuments({
+        isActive: true,
+        itemType: 'VALVE',
+        status: 'Operational',
+      }),
+    ]);
+
+    const partData = partSummary[0] || {};
+    const valveData = valveSummary[0] || {};
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Stock summary fetched successfully',
+      data: {
+        totalStock: Number(partData.totalStock || 0),
+        lowStock: Number(partData.lowStock || 0),
+        totalAssets: Number(valveData.totalAssets || 0),
+        activeAssets: Number(activeAssets || 0),
+      },
     });
   } catch (error) {
     return res.status(500).json({ status: 'error', message: error.message });
@@ -253,6 +431,12 @@ async function updateStock(req, res) {
     const { id } = req.params;
     const {
       openingQty,
+      qtyOnHand,
+      itemName,
+      valveType,
+      size,
+      endConnection,
+      class: className,
       minStockLevel,
       reorderQty,
       plan,
@@ -267,11 +451,97 @@ async function updateStock(req, res) {
       referenceNumber,
       sourcePONumber,
       stockDate,
+      serialNo,
+      status,
+      presentLocation,
+      moc,
     } = req.body;
 
     const stock = await Stock.findById(id);
     if (!stock || !stock.isActive) {
       return res.status(404).json({ status: 'error', message: 'Stock item not found' });
+    }
+
+    const nextReferenceNumber = referenceNumber !== undefined ? cleanText(referenceNumber) : stock.referenceNumber;
+    const nextSourceInvoiceNo =
+      sourceInvoiceNo !== undefined ? cleanText(sourceInvoiceNo) : stock.sourceInvoiceNo;
+    const nextSourceParty = sourceParty !== undefined ? cleanText(sourceParty) : stock.sourceParty;
+    const nextPresentLocation =
+      presentLocation !== undefined ? cleanText(presentLocation) : stock.presentLocation;
+    const nextStockDate = stockDate !== undefined ? parseOptionalDate(stockDate) : stock.stockDate;
+
+    if (stock.itemType === 'PART') {
+      if (!nextReferenceNumber) {
+        return res.status(400).json({ status: 'error', message: 'MRN No. is required for stock item' });
+      }
+
+      if (!nextSourceInvoiceNo) {
+        return res.status(400).json({ status: 'error', message: 'Invoice Number is required for stock item' });
+      }
+
+      if (!nextSourceParty) {
+        return res.status(400).json({ status: 'error', message: 'Source Party is required for stock item' });
+      }
+
+      if (!nextStockDate) {
+        return res.status(400).json({ status: 'error', message: 'Valid Date is required for stock item' });
+      }
+
+      if (!nextPresentLocation) {
+        return res.status(400).json({ status: 'error', message: 'Present Location is required for stock item' });
+      }
+    }
+
+    if (stock.itemType === 'VALVE' && status !== undefined) {
+      const normalizedStatus = normalizeValveStatus(status);
+      if (!isValidValveStatus(normalizedStatus)) {
+        return res.status(400).json({
+          status: 'error',
+          message: `Status must be one of: ${VALVE_STATUSES.join(', ')}`,
+        });
+      }
+      stock.status = normalizedStatus;
+    }
+
+    if (stock.itemType === 'VALVE') {
+      if (itemName !== undefined) {
+        const cleanedItemName = cleanText(itemName);
+        if (!cleanedItemName) {
+          return res.status(400).json({
+            status: 'error',
+            message: 'Item / Equipment Name is required for pattern item',
+          });
+        }
+        stock.itemName = cleanedItemName;
+      }
+
+      if (valveType !== undefined) stock.valveType = cleanText(valveType);
+      if (size !== undefined) stock.size = cleanText(size);
+      if (endConnection !== undefined) stock.endConnection = cleanText(endConnection);
+      if (className !== undefined) stock.class = cleanText(className);
+    }
+
+    const isQtyUpdateRequested = qtyOnHand !== undefined;
+    if (isQtyUpdateRequested) {
+      const nextQtyOnHand = parseNonNegativeNumber(qtyOnHand, stock.qtyOnHand);
+      if (nextQtyOnHand <= 0) {
+        return res.status(400).json({ status: 'error', message: 'Qty must be greater than 0' });
+      }
+
+      if (nextQtyOnHand !== stock.qtyOnHand) {
+        stock.movements.push({
+          movementType: 'ADJUST',
+          quantity: nextQtyOnHand,
+          sourceType: 'MANUAL',
+          referenceNo: nextReferenceNumber || nextSourceInvoiceNo || cleanText(sourcePONumber),
+          note: `Qty updated from ${stock.qtyOnHand} to ${nextQtyOnHand}`,
+          movedBy: req.user?.userName || 'system',
+        });
+      }
+
+      stock.qtyOnHand = nextQtyOnHand;
+      stock.committed = Math.min(stock.committed || 0, stock.qtyOnHand);
+      stock.available = Math.max(stock.qtyOnHand - (stock.committed || 0), 0);
     }
 
     if (openingQty !== undefined) {
@@ -296,18 +566,22 @@ async function updateStock(req, res) {
     }
     if (available !== undefined) {
       stock.available = Math.min(parseNonNegativeNumber(available, stock.available), stock.qtyOnHand || 0);
-    } else if (committed !== undefined) {
+    } else if (committed !== undefined || isQtyUpdateRequested) {
       stock.available = Math.max((stock.qtyOnHand || 0) - (stock.committed || 0), 0);
     }
     if (unit !== undefined) stock.unit = unit;
     if (lastPurchasePrice !== undefined) stock.lastPurchasePrice = Number(lastPurchasePrice);
     if (remarks !== undefined) stock.remarks = cleanText(remarks);
-    if (sourceInvoiceNo !== undefined) stock.sourceInvoiceNo = cleanText(sourceInvoiceNo);
-    if (sourceParty !== undefined) stock.sourceParty = cleanText(sourceParty);
+    if (sourceInvoiceNo !== undefined) stock.sourceInvoiceNo = nextSourceInvoiceNo;
+    if (sourceParty !== undefined) stock.sourceParty = nextSourceParty;
     if (workOrderNumber !== undefined) stock.workOrderNumber = cleanText(workOrderNumber);
-    if (referenceNumber !== undefined) stock.referenceNumber = cleanText(referenceNumber);
+    if (referenceNumber !== undefined) stock.referenceNumber = nextReferenceNumber;
     if (sourcePONumber !== undefined) stock.sourcePONumber = cleanText(sourcePONumber);
-    if (stockDate !== undefined) stock.stockDate = parseOptionalDate(stockDate);
+    if (serialNo !== undefined) stock.serialNo = cleanText(serialNo);
+    if (status !== undefined && stock.itemType !== 'VALVE') stock.status = cleanText(status);
+    if (presentLocation !== undefined) stock.presentLocation = nextPresentLocation;
+    if (moc !== undefined && stock.itemType === 'VALVE') stock.moc = cleanText(moc);
+    if (stockDate !== undefined) stock.stockDate = nextStockDate;
 
     await stock.save();
 
@@ -448,6 +722,7 @@ async function deleteStock(req, res) {
 module.exports = {
   createStock,
   getAllStock,
+  getStockSummary,
   getStockById,
   updateStock,
   addStockMovement,

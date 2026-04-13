@@ -2,6 +2,7 @@ const express = require('express');
 const {
   createStock,
   getAllStock,
+  getStockSummary,
   getStockById,
   updateStock,
   addStockMovement,
@@ -28,6 +29,13 @@ router.get(
   '/',
   permissionMiddleware('Stock Management', 'canView'),
   getAllStock
+);
+
+// Get stock summary cards data - requires canView permission
+router.get(
+  '/summary',
+  permissionMiddleware('Stock Management', 'canView'),
+  getStockSummary
 );
 
 // Get reorder suggestions - requires canView permission

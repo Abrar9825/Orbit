@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { clearAuthSession, hasUsableAuthToken } from '../../services/authStorage';
 import { deleteStock, getStockList } from '../../services/stockApi';
 import { formatDate, formatNumber, mapStockForView, STOCK_STATUS_COLORS, STOCK_TABS } from './stock.model';
 
@@ -13,6 +14,17 @@ function parsePoData() {
   }
 }
 
+function isAuthError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  return (
+    message.includes('token') ||
+    message.includes('access denied') ||
+    message.includes('login again') ||
+    message.includes('login first') ||
+    message.includes('unauthorized')
+  );
+}
+
 export default function useStockManagementController() {
   const navigate = useNavigate();
 
@@ -24,11 +36,11 @@ export default function useStockManagementController() {
   const [poRows, setPoRows] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const itemsPerPage = 8;
+  const itemsPerPage = 6;
 
   useEffect(() => {
-    const token = localStorage.getItem('orbitAuthToken');
-    if (!token) {
+    if (!hasUsableAuthToken()) {
+      clearAuthSession();
       navigate('/');
     }
   }, [navigate]);
@@ -53,6 +65,12 @@ export default function useStockManagementController() {
         : [];
       setRows(mapped);
     } catch (nextError) {
+      if (isAuthError(nextError)) {
+        clearAuthSession();
+        navigate('/');
+        return;
+      }
+
       setError(nextError.message);
       setRows([]);
     } finally {
@@ -137,6 +155,12 @@ export default function useStockManagementController() {
       await deleteStock(id);
       await loadRows(activeTab, searchQuery);
     } catch (nextError) {
+      if (isAuthError(nextError)) {
+        clearAuthSession();
+        navigate('/');
+        return;
+      }
+
       window.alert(nextError.message);
     }
   };

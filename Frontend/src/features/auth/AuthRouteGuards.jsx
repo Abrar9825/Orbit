@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { verifyToken } from '../../services/authApi';
-import { clearAuthSession, getAuthToken } from '../../services/authStorage';
+import { clearAuthSession, getAuthToken, hasUsableAuthToken } from '../../services/authStorage';
 
 function AuthGateLoader() {
   return (
@@ -12,7 +12,8 @@ function AuthGateLoader() {
 }
 
 function useAuthStatus() {
-  const [status, setStatus] = useState(() => (getAuthToken() ? 'checking' : 'guest'));
+  const [status, setStatus] = useState(() => (hasUsableAuthToken() ? 'authenticated' : 'guest'));
+  const [isChecking, setIsChecking] = useState(() => Boolean(getAuthToken()));
 
   useEffect(() => {
     let isActive = true;
@@ -20,10 +21,22 @@ function useAuthStatus() {
 
     if (!token) {
       setStatus('guest');
+      setIsChecking(false);
       return () => {
         isActive = false;
       };
     }
+
+    if (!hasUsableAuthToken()) {
+      clearAuthSession();
+      setStatus('guest');
+      setIsChecking(false);
+      return () => {
+        isActive = false;
+      };
+    }
+
+    setIsChecking(true);
 
     const validateSession = async () => {
       try {
@@ -43,6 +56,10 @@ function useAuthStatus() {
         if (isActive) {
           setStatus('guest');
         }
+      } finally {
+        if (isActive) {
+          setIsChecking(false);
+        }
       }
     };
 
@@ -53,14 +70,18 @@ function useAuthStatus() {
     };
   }, []);
 
-  return status;
+  return { status, isChecking };
 }
 
 export function ProtectedRoute() {
   const location = useLocation();
-  const status = useAuthStatus();
+  const { status, isChecking } = useAuthStatus();
 
-  if (status === 'checking') {
+  if (status === 'authenticated') {
+    return <Outlet />;
+  }
+
+  if (isChecking) {
     return <AuthGateLoader />;
   }
 
@@ -68,19 +89,9 @@ export function ProtectedRoute() {
     return <Navigate to="/" replace state={{ from: location }} />;
   }
 
-  return <Outlet />;
+  return null;
 }
 
 export function PublicOnlyRoute() {
-  const status = useAuthStatus();
-
-  if (status === 'checking') {
-    return <AuthGateLoader />;
-  }
-
-  if (status === 'authenticated') {
-    return <Navigate to="/cards" replace />;
-  }
-
   return <Outlet />;
 }

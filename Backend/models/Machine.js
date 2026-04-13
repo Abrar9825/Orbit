@@ -12,6 +12,7 @@ const machineSchema = new mongoose.Schema(
         'Casting',
         'Machining',
         'Assembly',
+        'QC',
         'Paint',
         'Final QC',
         'Testing',
